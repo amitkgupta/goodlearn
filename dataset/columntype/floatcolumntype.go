@@ -17,3 +17,7 @@ func (ft *floatType) ValueFromRaw(x float64) (interface{}, error) {
 func (ft *floatType) RawFromString(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
+
+func (ft *floatType) IsFloat() bool {
+	return true
+}

@@ -23,8 +23,11 @@ type kNNClassifier struct {
 	trainingData *dataset.Dataset
 }
 
-// bad, check compaitiblity
 func (classifier *kNNClassifier) Train(trainingData *dataset.Dataset) error {
+	if !trainingData.AllFeaturesFloats {
+		return newNonFloatFeaturesTrainingSetError()
+	}
+
 	classifier.trainingData = trainingData
 	return nil
 }
@@ -35,9 +38,19 @@ func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, erro
 		return nil, newUntrainedClassifierError()
 	}
 
-	// bad, check compatibility
+	if testRow.NumFeatures != trainingData.NumFeatures {
+		return nil, newRowLengthMismatchError(testRow.NumFeatures, trainingData.NumFeatures)
+	}
 
-	nearestNeighbours := knnutilities.NewSortedTargetCollection(classifier.k)
+	if !testRow.AllFeaturesFloats {
+		return nil, newNonFloatFeaturesTestRowError()
+	}
+
+	nearestNeighbours, err := knnutilities.NewSortedTargetCollection(classifier.k)
+	if err != nil {
+		return nil, err
+	}
+
 	testRowFeatureValues := testRow.UnsafeFloatFeatureValues()
 
 	for i := 0; i < trainingData.NumRows(); i++ {
@@ -66,4 +79,16 @@ func newInvalidNumberOfNeighboursError(k int) error {
 
 func newInvalidFloatFeatureDatasetError() error {
 	return errors.New("dataset invalid, has feature columns which aren't floats")
+}
+
+func newRowLengthMismatchError(numTestRowFeatures, numTrainingSetFeatures int) error {
+	return errors.New(fmt.Sprintf("Test row has %d features, training set has %d", numTestRowFeatures, numTrainingSetFeatures))
+}
+
+func newNonFloatFeaturesTrainingSetError() error {
+	return errors.New("cannot train on dataset with some non-float features")
+}
+
+func newNonFloatFeaturesTestRowError() error {
+	return errors.New("cannot classify row with some non-float features")
 }

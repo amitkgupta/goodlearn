@@ -37,6 +37,10 @@ func (st *stringType) RawFromString(s string) (float64, error) {
 	return st.encoding[s], nil
 }
 
+func (st *stringType) IsFloat() bool {
+	return false
+}
+
 func newUnknownCodeError(raw float64) error {
 	return errors.New(fmt.Sprintf("Unknown code %v", raw))
 }

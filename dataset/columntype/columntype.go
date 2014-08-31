@@ -7,6 +7,7 @@ import (
 type ColumnType interface {
 	RawFromString(string) (float64, error)
 	ValueFromRaw(float64) (interface{}, error)
+	IsFloat() bool
 }
 
 func StringsToColumnTypes(strings []string) ([]ColumnType, error) {

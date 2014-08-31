@@ -9,10 +9,12 @@ import (
 )
 
 type Dataset struct {
-	rawDataset  []float64
-	targetStart int
-	targetEnd   int
-	columnTypes []columntype.ColumnType
+	rawDataset        []float64
+	targetStart       int
+	targetEnd         int
+	columnTypes       []columntype.ColumnType
+	AllFeaturesFloats bool
+	NumFeatures       int
 }
 
 func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType) (*Dataset, error) {
@@ -22,7 +24,15 @@ func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType)
 		return nil, newTargetOutOfBoundsError(targetStart, targetEnd, numColumns)
 	}
 
-	return &Dataset{[]float64{}, targetStart, targetEnd, columnTypes}, nil
+	allFeaturesFloats := true
+	for i, columnType := range columnTypes {
+		if (i < targetStart || i > targetEnd) && !columnType.IsFloat() {
+			allFeaturesFloats = false
+			break
+		}
+	}
+
+	return &Dataset{[]float64{}, targetStart, targetEnd, columnTypes, allFeaturesFloats, numColumns - (targetEnd - targetStart)}, nil
 }
 
 func (dataset *Dataset) NumRows() int {
@@ -31,17 +41,30 @@ func (dataset *Dataset) NumRows() int {
 
 func (dataset *Dataset) Row(i int) (*row.Row, error) {
 	numRows := dataset.NumRows()
-
 	if i < 0 || numRows <= i {
 		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
 	}
 
 	numColumns := dataset.numColumns()
-	rawValues := dataset.rawDataset[i*numColumns : (i+1)*numColumns]
-	return row.NewRow(rawValues, dataset.targetStart, dataset.targetEnd, dataset.columnTypes)
+
+	target := []interface{}{}
+	for j := dataset.targetStart; j <= dataset.targetEnd; j++ {
+		value, err := dataset.columnTypes[j].ValueFromRaw(dataset.rawDataset[i*numColumns+j])
+		if err != nil {
+			return nil, err
+		}
+
+		target = append(target, value)
+	}
+
+	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
+	if dataset.targetEnd < numColumns {
+		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd:(i+1)*numColumns]...)
+	}
+
+	return row.UnsafeNewRow(target, rawFeatureValues, dataset.AllFeaturesFloats, dataset.NumFeatures), nil
 }
 
-//bad, check compatibility
 func (dataset *Dataset) AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error {
 	actualLength := len(strings)
 	expectedLength := len(columnTypes)
@@ -50,20 +73,21 @@ func (dataset *Dataset) AddRowFromStrings(targetStart, targetEnd int, columnType
 		return newRowLengthMismatchError(actualLength, expectedLength)
 	}
 
-	vs := make([]float64, actualLength)
+	rawValues := make([]float64, actualLength)
 
 	for i, s := range strings {
 		columnType := columnTypes[i]
 
-		v, err := columnType.RawFromString(s)
+		value, err := columnType.RawFromString(s)
 		if err != nil {
 			return err
 		}
 
-		vs[i] = v
+		rawValues[i] = value
 	}
 
-	dataset.rawDataset = append(dataset.rawDataset, vs...)
+	dataset.rawDataset = append(dataset.rawDataset, rawValues...)
+
 	return nil
 }
 
