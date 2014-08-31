@@ -10,6 +10,7 @@ install:
   - go get github.com/onsi/ginkgo
   - go install github.com/onsi/ginkgo/ginkgo
   - go get -v ./...
+  - export PATH=$PATH:$HOME/gopath/bin
 
 script: ginkgo -r --randomizeAllSpecs --failOnPending --randomizeSuites --race --cover
 
