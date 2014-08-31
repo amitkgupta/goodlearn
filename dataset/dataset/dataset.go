@@ -78,7 +78,7 @@ func (dataset *Dataset) AddRowFromStrings(targetStart, targetEnd int, columnType
 	for i, s := range strings {
 		columnType := columnTypes[i]
 
-		value, err := columnType.RawFromString(s)
+		value, err := columnType.PersistRawFromString(s)
 		if err != nil {
 			return err
 		}

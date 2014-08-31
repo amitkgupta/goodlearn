@@ -14,7 +14,7 @@ func (ft *floatType) ValueFromRaw(x float64) (interface{}, error) {
 	return x, nil
 }
 
-func (ft *floatType) RawFromString(s string) (float64, error) {
+func (ft *floatType) PersistRawFromString(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 

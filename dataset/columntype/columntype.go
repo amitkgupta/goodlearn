@@ -5,7 +5,7 @@ import (
 )
 
 type ColumnType interface {
-	RawFromString(string) (float64, error)
+	PersistRawFromString(string) (float64, error)
 	ValueFromRaw(float64) (interface{}, error)
 	IsFloat() bool
 }

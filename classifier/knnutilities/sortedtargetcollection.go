@@ -8,7 +8,13 @@ import (
 	"github.com/amitkgupta/goodlearn/dataset/target"
 )
 
-type sortedTargetCollection struct {
+type SortedTargetCollection interface {
+	Insert(target.Target, float64) error
+	MaxDistance() float64
+	Vote() (target.Target, error)
+}
+
+type kNNTargetCollection struct {
 	k                int
 	targetCollection []targetWithDistance
 }
@@ -18,38 +24,38 @@ type targetWithDistance struct {
 	distance float64
 }
 
-func NewSortedTargetCollection(k int) (*sortedTargetCollection, error) {
+func NewKNNTargetCollection(k int) (*kNNTargetCollection, error) {
 	if k < 1 {
 		return nil, newInvalidCapError(k)
 	}
 
-	return &sortedTargetCollection{k, make([]targetWithDistance, 0, k)}, nil
+	return &kNNTargetCollection{k, make([]targetWithDistance, 0, k)}, nil
 }
 
-func (stc *sortedTargetCollection) Insert(target target.Target, distance float64) error {
+func (stc *kNNTargetCollection) Insert(target target.Target, distance float64) error {
 	if distance >= stc.MaxDistance() {
 		return newDistanceTooLargeError(distance, stc.MaxDistance())
 	}
 
 	newTargetWithDistance := targetWithDistance{target, distance}
-	if len(stc.targetCollection) == 0 {
-		stc.targetCollection = []targetWithDistance{newTargetWithDistance}
-		return nil
-	}
 
 	for i, twd := range stc.targetCollection {
 		if distance < twd.distance {
-			newCollection := append(stc.targetCollection[0:i], newTargetWithDistance)
+			newCollection := []targetWithDistance{}
+			newCollection = append(newCollection, stc.targetCollection[0:i]...)
+			newCollection = append(newCollection, newTargetWithDistance)
 			newCollection = append(newCollection, stc.targetCollection[i:]...)
-			newCollection = newCollection[:int(math.Min(float64(stc.k), float64(len(newCollection))))]
-			stc.targetCollection = newCollection
+
+			stc.targetCollection = newCollection[:int(math.Min(float64(stc.k), float64(len(newCollection))))]
+			return nil
 		}
 	}
 
+	stc.targetCollection = append(stc.targetCollection, newTargetWithDistance)
 	return nil
 }
 
-func (stc *sortedTargetCollection) MaxDistance() float64 {
+func (stc *kNNTargetCollection) MaxDistance() float64 {
 	if len(stc.targetCollection) < stc.k {
 		return math.MaxFloat64
 	}
@@ -57,7 +63,7 @@ func (stc *sortedTargetCollection) MaxDistance() float64 {
 	return stc.targetCollection[stc.k-1].distance
 }
 
-func (stc *sortedTargetCollection) Vote() (target.Target, error) {
+func (stc *kNNTargetCollection) Vote() (target.Target, error) {
 	if len(stc.targetCollection) == 0 {
 		return nil, newUnpopulatedVoteError()
 	}

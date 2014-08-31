@@ -24,7 +24,7 @@ func (st *stringType) ValueFromRaw(raw float64) (interface{}, error) {
 	return value, nil
 }
 
-func (st *stringType) RawFromString(s string) (float64, error) {
+func (st *stringType) PersistRawFromString(s string) (float64, error) {
 	value, ok := st.encoding[s]
 	if ok {
 		return value, nil
