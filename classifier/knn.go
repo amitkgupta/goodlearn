@@ -46,7 +46,7 @@ func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, erro
 		return nil, newNonFloatFeaturesTestRowError()
 	}
 
-	nearestNeighbours, err := knnutilities.NewSortedTargetCollection(classifier.k)
+	nearestNeighbours, err := knnutilities.NewKNNTargetCollection(classifier.k)
 	if err != nil {
 		return nil, err
 	}
