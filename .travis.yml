@@ -1,0 +1,20 @@
+language: go
+go:
+  - 1.3
+
+install:
+  - go get code.google.com/p/go.tools/cmd/cover
+  - go get github.com/modocache/gover
+  - go get github.com/mattn/goveralls
+  - go get github.com/onsi/gomega
+  - go install github.com/onsi/ginkgo/ginkgo
+  - go get -v ./...
+
+script: ginkgo -r --randomizeAllSpecs --failOnPending --randomizeSuites --race --cover
+
+after_script:
+  - gover
+  - goveralls -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
+
+env:
+  - secure: "YAkTSGi7Ek9BAFg6ICOgpVXuXeQvnG1QvYeO4XyENVxRRXoefQ3UGB3UI3KY8HMXxOAyXqbJPq9w44c8gq+a6J52pTKgDluH0qOB8otpIsDWqlUMJJhG7zV/m71zOuQDch2R0iccKeu0jP5XBErAvr41Cj/0+t1Nf+eMjv8vQKU=" #COVERALLS_TOKEN
