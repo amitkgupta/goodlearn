@@ -16,7 +16,7 @@ var _ = Describe("Stringcolumntype", func() {
 		stringColumnType = columnTypes[0]
 	})
 
-	Describe("ValueFromRaw and RawFromValue", func() {
+	Describe("ValueFromRaw and PersistRawFromString", func() {
 		It("Maintains a stateful two-way map between raw values and strings", func() {
 			rawHello, err := stringColumnType.PersistRawFromString("hello")
 			Ω(err).ShouldNot(HaveOccurred())
