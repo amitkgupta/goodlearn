@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/amitkgupta/goodlearn/data/columntype"
+	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/dataset/inmemorydataset"
 )
 
-func InMemoryDatasetFromPath(filepath string, targetStart, targetEnd int) (*inmemorydataset.InMemoryDataset, error) {
+func DatasetFromPath(filepath string, targetStart, targetEnd int) (dataset.Dataset, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -32,13 +33,13 @@ func InMemoryDatasetFromPath(filepath string, targetStart, targetEnd int) (*inme
 		return nil, err
 	}
 
-	err = newDataset.AddRowFromStrings(targetStart, targetEnd, columnTypes, firstLine)
+	err = newDataset.AddRowFromStrings(targetStart, targetEnd, firstLine)
 	if err != nil {
 		return nil, err
 	}
 
 	for line, err := reader.Read(); err == nil; line, err = reader.Read() {
-		err = newDataset.AddRowFromStrings(targetStart, targetEnd, columnTypes, line)
+		err = newDataset.AddRowFromStrings(targetStart, targetEnd, line)
 		if err != nil {
 			return nil, err
 		}

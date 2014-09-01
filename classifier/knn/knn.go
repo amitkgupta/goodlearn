@@ -19,36 +19,38 @@ func NewKNNClassifier(k int) (*kNNClassifier, error) {
 
 type kNNClassifier struct {
 	k            int
-	trainingData dataset.Dataset
+	trainingData dataset.FloatFeatureDataset
 }
 
 func (classifier *kNNClassifier) Train(trainingData dataset.Dataset) error {
-	if !trainingData.AllFeaturesFloats() {
+	floatFeatureTrainingData, ok := trainingData.(dataset.FloatFeatureDataset)
+	if !ok {
 		return newNonFloatFeaturesTrainingSetError()
 	}
 
-	if trainingData.NumRows() == 0 {
+	if floatFeatureTrainingData.NumRows() == 0 {
 		return newEmptyTrainingDatasetError()
 	}
 
-	classifier.trainingData = trainingData
+	classifier.trainingData = floatFeatureTrainingData
 	return nil
 }
 
-func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, error) {
+func (classifier *kNNClassifier) Classify(testRow row.Row) (target.Target, error) {
+	floatFeatureTestRow, ok := testRow.(row.FloatFeatureRow)
+	if !ok {
+		return nil, newNonFloatFeaturesTestRowError()
+	}
+
 	trainingData := classifier.trainingData
 	if trainingData == nil {
 		return nil, newUntrainedClassifierError()
 	}
 
-	numTestRowFeatures := testRow.NumFeatures()
+	numTestRowFeatures := floatFeatureTestRow.NumFeatures()
 	numTrainingDataFeatures := trainingData.NumFeatures()
 	if numTestRowFeatures != numTrainingDataFeatures {
 		return nil, newRowLengthMismatchError(numTestRowFeatures, numTrainingDataFeatures)
-	}
-
-	if !testRow.AllFeaturesFloats() {
-		return nil, newNonFloatFeaturesTestRowError()
 	}
 
 	nearestNeighbours, err := knnutilities.NewKNNTargetCollection(classifier.k)
@@ -56,18 +58,18 @@ func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, erro
 		return nil, err
 	}
 
-	testRowFeatureValues := testRow.UnsafeFloatFeatureValues()
+	testRowFeatureValues := floatFeatureTestRow.FloatFeatureValues()
 
 	for i := 0; i < trainingData.NumRows(); i++ {
-		trainingRow, err := trainingData.Row(i)
+		trainingRow, err := trainingData.FloatFeatureRow(i)
 		if err != nil {
 			return nil, err
 		}
-		trainingRowFeatureValues := trainingRow.UnsafeFloatFeatureValues()
+		trainingRowFeatureValues := trainingRow.FloatFeatureValues()
 
 		distance := knnutilities.Euclidean(testRowFeatureValues, trainingRowFeatureValues, nearestNeighbours.MaxDistance())
 		if distance < nearestNeighbours.MaxDistance() {
-			nearestNeighbours.Insert(trainingRow.Target, distance)
+			nearestNeighbours.Insert(trainingRow.Target(), distance)
 		}
 	}
 
@@ -88,11 +90,11 @@ func newNonFloatFeaturesTrainingSetError() NonFloatFeaturesTrainingSetError {
 func newUntrainedClassifierError() UntrainedClassifierError {
 	return UntrainedClassifierError{}
 }
-func newRowLengthMismatchError(numTestRowFeatures, numTrainingSetFeatures int) RowLengthMismatchError {
-	return RowLengthMismatchError{numTestRowFeatures, numTrainingSetFeatures}
-}
 func newNonFloatFeaturesTestRowError() NonFloatFeaturesTestRowError {
 	return NonFloatFeaturesTestRowError{}
+}
+func newRowLengthMismatchError(numTestRowFeatures, numTrainingSetFeatures int) RowLengthMismatchError {
+	return RowLengthMismatchError{numTestRowFeatures, numTrainingSetFeatures}
 }
 
 type InvalidNumberOfNeighboursError struct {
@@ -105,11 +107,11 @@ type NonFloatFeaturesTrainingSetError struct {
 }
 
 type UntrainedClassifierError struct{}
+type NonFloatFeaturesTestRowError struct{}
 type RowLengthMismatchError struct {
 	numTestRowFeatures     int
 	numTrainingSetFeatures int
 }
-type NonFloatFeaturesTestRowError struct{}
 
 func (e InvalidNumberOfNeighboursError) Error() string {
 	return fmt.Sprintf("invalid number of neighbours %d", e.k)
@@ -122,12 +124,12 @@ func (e NonFloatFeaturesTrainingSetError) Error() string {
 	return "cannot train on dataset with some non-float features"
 }
 
+func (e NonFloatFeaturesTestRowError) Error() string {
+	return "cannot classify a row with some non-float features"
+}
 func (e UntrainedClassifierError) Error() string {
 	return "cannot classify before training"
 }
 func (e RowLengthMismatchError) Error() string {
 	return fmt.Sprintf("Test row has %d features, training set has %d", e.numTestRowFeatures, e.numTrainingSetFeatures)
-}
-func (e NonFloatFeaturesTestRowError) Error() string {
-	return "cannot classify row with some non-float features"
 }

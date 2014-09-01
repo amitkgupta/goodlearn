@@ -5,19 +5,25 @@ import (
 	"fmt"
 
 	"github.com/amitkgupta/goodlearn/data/columntype"
+	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/row"
+	"github.com/amitkgupta/goodlearn/data/row/inmemoryrow"
+	"github.com/amitkgupta/goodlearn/data/target"
 )
 
-type InMemoryDataset struct {
-	rawDataset        []float64
-	targetStart       int
-	targetEnd         int
-	columnTypes       []columntype.ColumnType
-	allFeaturesFloats bool
-	numFeatures       int
+type mixedFeatureTypeDataset struct {
+	rawDataset  []float64
+	targetStart int
+	targetEnd   int
+	columnTypes []columntype.ColumnType
+	numFeatures int
 }
 
-func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType) (*InMemoryDataset, error) {
+type floatFeatureTypeDataset struct {
+	*mixedFeatureTypeDataset
+}
+
+func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType) (dataset.Dataset, error) {
 	numColumns := len(columnTypes)
 
 	if targetOutOfBounds(targetStart, targetEnd, numColumns) {
@@ -32,46 +38,32 @@ func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType)
 		}
 	}
 
-	return &InMemoryDataset{[]float64{}, targetStart, targetEnd, columnTypes, allFeaturesFloats, numColumns - (targetEnd - targetStart + 1)}, nil
+	mixedFeatureTypeDataset := &mixedFeatureTypeDataset{
+		[]float64{},
+		targetStart,
+		targetEnd,
+		columnTypes,
+		numColumns - (targetEnd - targetStart + 1),
+	}
+
+	if allFeaturesFloats {
+		return &floatFeatureTypeDataset{mixedFeatureTypeDataset}, nil
+	} else {
+		return mixedFeatureTypeDataset, nil
+	}
 }
 
-func (dataset *InMemoryDataset) NumRows() int {
+func (dataset *mixedFeatureTypeDataset) NumRows() int {
 	return len(dataset.rawDataset) / dataset.numColumns()
 }
 
-func (dataset *InMemoryDataset) NumFeatures() int {
+func (dataset *mixedFeatureTypeDataset) NumFeatures() int {
 	return dataset.numFeatures
 }
 
-func (dataset *InMemoryDataset) Row(i int) (*row.Row, error) {
-	numRows := dataset.NumRows()
-	if i < 0 || numRows <= i {
-		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
-	}
-
-	numColumns := dataset.numColumns()
-
-	target := []interface{}{}
-	for j := dataset.targetStart; j <= dataset.targetEnd; j++ {
-		value, err := dataset.columnTypes[j].ValueFromRaw(dataset.rawDataset[i*numColumns+j])
-		if err != nil {
-			return nil, err
-		}
-
-		target = append(target, value)
-	}
-
-	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
-	if dataset.targetEnd < numColumns {
-		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd+1:(i+1)*numColumns]...)
-	}
-
-	return row.UnsafeNewRow(target, rawFeatureValues, dataset.AllFeaturesFloats()), nil
-}
-
-func (dataset *InMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error {
+func (dataset *mixedFeatureTypeDataset) AddRowFromStrings(targetStart, targetEnd int, strings []string) error {
 	actualLength := len(strings)
-	expectedLength := len(columnTypes)
+	expectedLength := dataset.numColumns()
 
 	if actualLength != expectedLength {
 		return newRowLengthMismatchError(actualLength, expectedLength)
@@ -80,7 +72,7 @@ func (dataset *InMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, co
 	rawValues := make([]float64, actualLength)
 
 	for i, s := range strings {
-		columnType := columnTypes[i]
+		columnType := dataset.columnTypes[i]
 
 		value, err := columnType.PersistRawFromString(s)
 		if err != nil {
@@ -95,11 +87,52 @@ func (dataset *InMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, co
 	return nil
 }
 
-func (dataset *InMemoryDataset) AllFeaturesFloats() bool {
-	return dataset.allFeaturesFloats
+func (dataset *mixedFeatureTypeDataset) Row(i int) (row.Row, error) {
+	numRows := dataset.NumRows()
+	if i < 0 || numRows <= i {
+		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
+	}
+
+	return inmemoryrow.NewRow(dataset.targetAtRow(i), dataset.rawFeatureValuesAtRow(i), false), nil
 }
 
-func (dataset *InMemoryDataset) numColumns() int {
+func (dataset *floatFeatureTypeDataset) FloatFeatureRow(i int) (row.FloatFeatureRow, error) {
+	numRows := dataset.NumRows()
+	if i < 0 || numRows <= i {
+		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
+	}
+
+	return inmemoryrow.NewRow(
+		dataset.targetAtRow(i),
+		dataset.rawFeatureValuesAtRow(i),
+		true,
+	).(row.FloatFeatureRow), nil
+}
+
+func (dataset *mixedFeatureTypeDataset) targetAtRow(i int) target.Target {
+	numColumns := dataset.numColumns()
+	target := []interface{}{}
+
+	for j := dataset.targetStart; j <= dataset.targetEnd; j++ {
+		value, _ := dataset.columnTypes[j].ValueFromRaw(dataset.rawDataset[i*numColumns+j])
+		target = append(target, value)
+	}
+
+	return target
+}
+
+func (dataset *mixedFeatureTypeDataset) rawFeatureValuesAtRow(i int) []float64 {
+	numColumns := dataset.numColumns()
+	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
+
+	if dataset.targetEnd < numColumns {
+		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd+1:(i+1)*numColumns]...)
+	}
+
+	return rawFeatureValues
+}
+
+func (dataset *mixedFeatureTypeDataset) numColumns() int {
 	return len(dataset.columnTypes)
 }
 
