@@ -35,7 +35,7 @@ func (classifier *kNNClassifier) Train(trainingData dataset.Dataset) error {
 	return nil
 }
 
-func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, error) {
+func (classifier *kNNClassifier) Classify(testRow row.Row) (target.Target, error) {
 	trainingData := classifier.trainingData
 	if trainingData == nil {
 		return nil, newUntrainedClassifierError()
@@ -47,27 +47,22 @@ func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, erro
 		return nil, newRowLengthMismatchError(numTestRowFeatures, numTrainingDataFeatures)
 	}
 
-	if !testRow.AllFeaturesFloats() {
+	floatFeatureTestRow, ok := testRow.(row.FloatFeatureRow)
+	if !ok {
 		return nil, newNonFloatFeaturesTestRowError()
 	}
+	testRowFeatureValues := floatFeatureTestRow.Features()
 
-	nearestNeighbours, err := knnutilities.NewKNNTargetCollection(classifier.k)
-	if err != nil {
-		return nil, err
-	}
-
-	testRowFeatureValues := testRow.UnsafeFloatFeatureValues()
+	nearestNeighbours, _ := knnutilities.NewKNNTargetCollection(classifier.k)
 
 	for i := 0; i < trainingData.NumRows(); i++ {
-		trainingRow, err := trainingData.Row(i)
-		if err != nil {
-			return nil, err
-		}
-		trainingRowFeatureValues := trainingRow.UnsafeFloatFeatureValues()
+		trainingRow, _ := trainingData.Row(i)
+		floatFeatureTrainingRow, _ := trainingRow.(row.FloatFeatureRow)
+		trainingRowFeatureValues := floatFeatureTrainingRow.Features()
 
 		distance := knnutilities.Euclidean(testRowFeatureValues, trainingRowFeatureValues, nearestNeighbours.MaxDistance())
 		if distance < nearestNeighbours.MaxDistance() {
-			nearestNeighbours.Insert(trainingRow.Target, distance)
+			nearestNeighbours.Insert(trainingRow.Target(), distance)
 		}
 	}
 

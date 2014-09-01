@@ -9,8 +9,16 @@ import (
 
 type ColumnType interface {
 	PersistRawFromString(string) (float64, error)
-	ValueFromRaw(float64) (interface{}, error)
-	IsFloat() bool
+}
+
+type FloatColumnType interface {
+	ColumnType
+	ValueFromRaw(float64) (float64, error)
+}
+
+type StringColumnType interface {
+	ColumnType
+	ValueFromRaw(float64) (string, error)
 }
 
 func StringsToColumnTypes(strings []string) ([]ColumnType, error) {

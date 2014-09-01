@@ -15,10 +15,10 @@ func NewStringType() *stringType {
 	return &stringType{0, make(map[string]float64), make(map[float64]string)}
 }
 
-func (st *stringType) ValueFromRaw(raw float64) (interface{}, error) {
+func (st *stringType) ValueFromRaw(raw float64) (string, error) {
 	value, ok := st.decoding[raw]
 	if !ok {
-		return nil, newUnknownCodeError(raw)
+		return "", newUnknownCodeError(raw)
 	}
 
 	return value, nil
@@ -35,10 +35,6 @@ func (st *stringType) PersistRawFromString(s string) (float64, error) {
 	st.counter++
 
 	return st.encoding[s], nil
-}
-
-func (st *stringType) IsFloat() bool {
-	return false
 }
 
 func newUnknownCodeError(raw float64) error {

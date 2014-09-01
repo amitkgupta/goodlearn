@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Stringcolumntype", func() {
-	var stringColumnType columntype.ColumnType
+	var stringColumnType columntype.StringColumnType
 
 	BeforeEach(func() {
 		stringColumnType = stringcolumntype.NewStringType()
@@ -45,12 +45,6 @@ var _ = Describe("Stringcolumntype", func() {
 			rawHelloNew, err := stringColumnType.PersistRawFromString("hello")
 			Ω(rawHelloNew).Should(Equal(rawHello))
 			Ω(err).ShouldNot(HaveOccurred())
-		})
-	})
-
-	Describe("IsFloat", func() {
-		It("Returns false", func() {
-			Ω(stringColumnType.IsFloat()).Should(BeFalse())
 		})
 	})
 })

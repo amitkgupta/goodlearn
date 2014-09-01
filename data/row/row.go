@@ -1,28 +1,30 @@
 package row
 
 import (
+	"github.com/amitkgupta/goodlearn/data/row/floatfeaturerow"
+	"github.com/amitkgupta/goodlearn/data/row/mixedfeaturerow"
 	"github.com/amitkgupta/goodlearn/data/target"
 )
 
-type Row struct {
-	Target            target.Target
-	rawFeatureValues  []float64
-	allFeaturesFloats bool
-	numFeatures       int
+type Row interface {
+	Target() target.Target
+	NumFeatures() int
 }
 
-func UnsafeNewRow(target target.Target, rawFeatureValues []float64, allFeaturesFloats bool) *Row {
-	return &Row{target, rawFeatureValues, allFeaturesFloats, len(rawFeatureValues)}
+type MixedFeatureRow interface {
+	Row
+	Features() []interface{}
 }
 
-func (r *Row) AllFeaturesFloats() bool {
-	return r.allFeaturesFloats
+type FloatFeatureRow interface {
+	Row
+	Features() []float64
 }
 
-func (r *Row) NumFeatures() int {
-	return r.numFeatures
-}
-
-func (r *Row) UnsafeFloatFeatureValues() []float64 {
-	return r.rawFeatureValues
+func NewRow(allFeaturesFloats bool, target target.Target, rawFeatureValues []float64) Row {
+	if allFeaturesFloats {
+		return floatfeaturerow.NewFloatFeatureRow(target, rawFeatureValues)
+	} else {
+		return mixedfeaturerow.NewMixedFeatureRow(target, rawFeatureValues)
+	}
 }

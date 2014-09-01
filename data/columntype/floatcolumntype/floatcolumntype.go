@@ -10,14 +10,10 @@ func NewFloatType() *floatType {
 	return &floatType{}
 }
 
-func (ft *floatType) ValueFromRaw(x float64) (interface{}, error) {
+func (ft *floatType) ValueFromRaw(x float64) (float64, error) {
 	return x, nil
 }
 
 func (ft *floatType) PersistRawFromString(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
-}
-
-func (ft *floatType) IsFloat() bool {
-	return true
 }

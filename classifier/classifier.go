@@ -8,5 +8,5 @@ import (
 
 type Classifier interface {
 	Train(dataset.Dataset) error
-	Classify(*row.Row) (target.Target, error)
+	Classify(row.Row) (target.Target, error)
 }

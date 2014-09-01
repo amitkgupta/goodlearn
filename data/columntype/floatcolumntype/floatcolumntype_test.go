@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Floatcolumntype", func() {
-	var floatColumnType columntype.ColumnType
+	var floatColumnType columntype.FloatColumnType
 
 	BeforeEach(func() {
 		floatColumnType = floatcolumntype.NewFloatType()
@@ -38,12 +38,6 @@ var _ = Describe("Floatcolumntype", func() {
 				Ω(err).Should(HaveOccurred())
 
 			})
-		})
-	})
-
-	Describe("IsFloat", func() {
-		It("Returns true", func() {
-			Ω(floatColumnType.IsFloat()).Should(BeTrue())
 		})
 	})
 })

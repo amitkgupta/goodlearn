@@ -8,68 +8,38 @@ import (
 	"github.com/amitkgupta/goodlearn/data/row"
 )
 
-type InMemoryDataset struct {
-	rawDataset        []float64
-	targetStart       int
-	targetEnd         int
-	columnTypes       []columntype.ColumnType
+type inMemoryDataset struct {
 	allFeaturesFloats bool
 	numFeatures       int
+
+	targetStart int
+	targetEnd   int
+	columnTypes []columntype.ColumnType
+	rawDataset  []float64
 }
 
-func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType) (*InMemoryDataset, error) {
+func NewDataset(allFeaturesFloats bool, targetStart, targetEnd int, columnTypes []columntype.ColumnType) *inMemoryDataset {
 	numColumns := len(columnTypes)
-
-	if targetOutOfBounds(targetStart, targetEnd, numColumns) {
-		return nil, newTargetOutOfBoundsError(targetStart, targetEnd, numColumns)
+	numFeatures := numColumns - (targetEnd - targetStart + 1)
+	return &inMemoryDataset{
+		allFeaturesFloats,
+		numFeatures,
+		targetStart,
+		targetEnd,
+		columnTypes,
+		[]float64{},
 	}
-
-	allFeaturesFloats := true
-	for i, columnType := range columnTypes {
-		if (i < targetStart || i > targetEnd) && !columnType.IsFloat() {
-			allFeaturesFloats = false
-			break
-		}
-	}
-
-	return &InMemoryDataset{[]float64{}, targetStart, targetEnd, columnTypes, allFeaturesFloats, numColumns - (targetEnd - targetStart + 1)}, nil
 }
 
-func (dataset *InMemoryDataset) NumRows() int {
-	return len(dataset.rawDataset) / dataset.numColumns()
+func (dataset *inMemoryDataset) AllFeaturesFloats() bool {
+	return dataset.allFeaturesFloats
 }
 
-func (dataset *InMemoryDataset) NumFeatures() int {
+func (dataset *inMemoryDataset) NumFeatures() int {
 	return dataset.numFeatures
 }
 
-func (dataset *InMemoryDataset) Row(i int) (*row.Row, error) {
-	numRows := dataset.NumRows()
-	if i < 0 || numRows <= i {
-		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
-	}
-
-	numColumns := dataset.numColumns()
-
-	target := []interface{}{}
-	for j := dataset.targetStart; j <= dataset.targetEnd; j++ {
-		value, err := dataset.columnTypes[j].ValueFromRaw(dataset.rawDataset[i*numColumns+j])
-		if err != nil {
-			return nil, err
-		}
-
-		target = append(target, value)
-	}
-
-	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
-	if dataset.targetEnd < numColumns {
-		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd+1:(i+1)*numColumns]...)
-	}
-
-	return row.UnsafeNewRow(target, rawFeatureValues, dataset.AllFeaturesFloats()), nil
-}
-
-func (dataset *InMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error {
+func (dataset *inMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error {
 	actualLength := len(strings)
 	expectedLength := len(columnTypes)
 
@@ -95,29 +65,59 @@ func (dataset *InMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, co
 	return nil
 }
 
-func (dataset *InMemoryDataset) AllFeaturesFloats() bool {
-	return dataset.allFeaturesFloats
+func (dataset *inMemoryDataset) NumRows() int {
+	return len(dataset.rawDataset) / dataset.numColumns()
 }
 
-func (dataset *InMemoryDataset) numColumns() int {
+func (dataset *inMemoryDataset) Row(i int) (row.Row, error) {
+	numRows := dataset.NumRows()
+	if i < 0 || numRows <= i {
+		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
+	}
+
+	numColumns := dataset.numColumns()
+
+	target := []interface{}{}
+	for j := dataset.targetStart; j <= dataset.targetEnd; j++ {
+		value, err := dataset.valueAt(i, j)
+		if err != nil {
+			return nil, err
+		}
+		target = append(target, value)
+	}
+
+	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
+	if dataset.targetEnd < numColumns {
+		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd+1:(i+1)*numColumns]...)
+	}
+
+	return row.NewRow(dataset.AllFeaturesFloats(), target, rawFeatureValues), nil
+}
+
+func (dataset *inMemoryDataset) numColumns() int {
 	return len(dataset.columnTypes)
 }
 
-func targetOutOfBounds(targetStart, targetEnd, numColumns int) bool {
-	return targetStart < 0 ||
-		targetEnd >= numColumns ||
-		targetStart > targetEnd ||
-		(targetEnd-targetStart) >= (numColumns-1)
+func (dataset *inMemoryDataset) valueAt(rowIndex, columnIndex int) (interface{}, error) {
+	columnType := dataset.columnTypes[columnIndex]
+	rawValue := dataset.rawDataset[rowIndex*dataset.numColumns()+columnIndex]
+
+	var value interface{}
+	var err error
+
+	if floatColumnType, ok := columnType.(columntype.FloatColumnType); ok {
+		value, err = floatColumnType.ValueFromRaw(rawValue)
+	} else if stringColumnType, ok := columnType.(columntype.StringColumnType); ok {
+		value, err = stringColumnType.ValueFromRaw(rawValue)
+	} else {
+		value, err = nil, newUnknownColumnTypeError(columnIndex)
+	}
+
+	return value, err
 }
 
-func newTargetOutOfBoundsError(targetStart, targetEnd, numColumns int) error {
-	return errors.New(fmt.Sprintf(
-		"Dataset must have valid target bounds, and at least one non-target column; "+
-			"cannot have %d total columns, target start column %d and target end column %d",
-		numColumns,
-		targetStart,
-		targetEnd,
-	))
+func newUnknownColumnTypeError(columnIndex int) error {
+	return errors.New(fmt.Sprintf("Column %d has unknown type", columnIndex))
 }
 
 func newRowLengthMismatchError(actual, expected int) error {
