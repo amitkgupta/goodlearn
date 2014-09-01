@@ -1,4 +1,4 @@
-package csvparse_test
+package linear_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCsvparse(t *testing.T) {
+func TestLinear(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Csvparse Suite")
+	RunSpecs(t, "Linear Suite")
 }

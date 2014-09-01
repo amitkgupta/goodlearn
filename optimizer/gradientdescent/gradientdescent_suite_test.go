@@ -1,4 +1,4 @@
-package csvparse_test
+package gradientdescent_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCsvparse(t *testing.T) {
+func TestGradientdescent(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Csvparse Suite")
+	RunSpecs(t, "Gradientdescent Suite")
 }

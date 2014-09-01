@@ -4,11 +4,11 @@ import (
 	"encoding/csv"
 	"os"
 
-	"github.com/amitkgupta/goodlearn/dataset/columntype"
-	"github.com/amitkgupta/goodlearn/dataset/dataset"
+	"github.com/amitkgupta/goodlearn/data/columntype"
+	"github.com/amitkgupta/goodlearn/data/dataset/inmemorydataset"
 )
 
-func DatasetFromPath(filepath string, targetStart, targetEnd int) (*dataset.Dataset, error) {
+func InMemoryDatasetFromPath(filepath string, targetStart, targetEnd int) (*inmemorydataset.InMemoryDataset, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func DatasetFromPath(filepath string, targetStart, targetEnd int) (*dataset.Data
 		return nil, err
 	}
 
-	newDataset, err := dataset.NewDataset(targetStart, targetEnd, columnTypes)
+	newDataset, err := inmemorydataset.NewDataset(targetStart, targetEnd, columnTypes)
 	if err != nil {
 		return nil, err
 	}

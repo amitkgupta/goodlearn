@@ -1,12 +1,12 @@
 package classifier
 
 import (
-	"github.com/amitkgupta/goodlearn/dataset/dataset"
-	"github.com/amitkgupta/goodlearn/dataset/row"
-	"github.com/amitkgupta/goodlearn/dataset/target"
+	"github.com/amitkgupta/goodlearn/data/dataset"
+	"github.com/amitkgupta/goodlearn/data/row"
+	"github.com/amitkgupta/goodlearn/data/target"
 )
 
 type Classifier interface {
-	Train(*dataset.Dataset) error
+	Train(dataset.Dataset) error
 	Classify(*row.Row) (target.Target, error)
 }
