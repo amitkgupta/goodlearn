@@ -11,8 +11,8 @@ type Row struct {
 	NumFeatures       int
 }
 
-func UnsafeNewRow(target target.Target, rawFeatureValues []float64, allFeaturesFloats bool, numFeatures int) *Row {
-	return &Row{target, rawFeatureValues, allFeaturesFloats, numFeatures}
+func UnsafeNewRow(target target.Target, rawFeatureValues []float64, allFeaturesFloats bool) *Row {
+	return &Row{target, rawFeatureValues, allFeaturesFloats, len(rawFeatureValues)}
 }
 
 func (r *Row) UnsafeFloatFeatureValues() []float64 {

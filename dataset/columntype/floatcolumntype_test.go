@@ -30,7 +30,6 @@ var _ = Describe("Floatcolumntype", func() {
 				value, err := floatColumnType.PersistRawFromString("3.14")
 				Ω(value).Should(Equal(3.14))
 				Ω(err).ShouldNot(HaveOccurred())
-
 			})
 		})
 

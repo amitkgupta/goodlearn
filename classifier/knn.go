@@ -1,7 +1,6 @@
 package classifier
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/amitkgupta/goodlearn/classifier/knnutilities"
@@ -26,6 +25,10 @@ type kNNClassifier struct {
 func (classifier *kNNClassifier) Train(trainingData *dataset.Dataset) error {
 	if !trainingData.AllFeaturesFloats {
 		return newNonFloatFeaturesTrainingSetError()
+	}
+
+	if trainingData.NumRows() == 0 {
+		return newEmptyTrainingDatasetError()
 	}
 
 	classifier.trainingData = trainingData
@@ -69,26 +72,72 @@ func (classifier *kNNClassifier) Classify(testRow *row.Row) (target.Target, erro
 	return nearestNeighbours.Vote()
 }
 
-func newUntrainedClassifierError() error {
-	return errors.New("cannot classify before training")
+type EmptyTrainingDatasetError struct{}
+
+func (e EmptyTrainingDatasetError) Error() string {
+	return "cannot train on an empty dataset"
+}
+func newEmptyTrainingDatasetError() EmptyTrainingDatasetError {
+	return EmptyTrainingDatasetError{}
 }
 
-func newInvalidNumberOfNeighboursError(k int) error {
-	return errors.New(fmt.Sprintf("invalid number of neighbours %d", k))
+type UntrainedClassifierError struct{}
+
+func (e UntrainedClassifierError) Error() string {
+	return "cannot classify before training"
+}
+func newUntrainedClassifierError() UntrainedClassifierError {
+	return UntrainedClassifierError{}
 }
 
-func newInvalidFloatFeatureDatasetError() error {
-	return errors.New("dataset invalid, has feature columns which aren't floats")
+type InvalidNumberOfNeighboursError struct {
+	k int
 }
 
-func newRowLengthMismatchError(numTestRowFeatures, numTrainingSetFeatures int) error {
-	return errors.New(fmt.Sprintf("Test row has %d features, training set has %d", numTestRowFeatures, numTrainingSetFeatures))
+func (e InvalidNumberOfNeighboursError) Error() string {
+	return fmt.Sprintf("invalid number of neighbours %d", e.k)
+}
+func newInvalidNumberOfNeighboursError(k int) InvalidNumberOfNeighboursError {
+	return InvalidNumberOfNeighboursError{k}
 }
 
-func newNonFloatFeaturesTrainingSetError() error {
-	return errors.New("cannot train on dataset with some non-float features")
+type InvalidFloatFeatureDatasetError struct{}
+
+func (e InvalidFloatFeatureDatasetError) Error() string {
+	return "dataset invalid, has feature columns which aren't floats"
+}
+func newInvalidFloatFeatureDatasetError() InvalidFloatFeatureDatasetError {
+	return InvalidFloatFeatureDatasetError{}
 }
 
-func newNonFloatFeaturesTestRowError() error {
-	return errors.New("cannot classify row with some non-float features")
+type RowLengthMismatchError struct {
+	numTestRowFeatures     int
+	numTrainingSetFeatures int
+}
+
+func (e RowLengthMismatchError) Error() string {
+	return fmt.Sprintf("Test row has %d features, training set has %d", e.numTestRowFeatures, e.numTrainingSetFeatures)
+}
+func newRowLengthMismatchError(numTestRowFeatures, numTrainingSetFeatures int) RowLengthMismatchError {
+	return RowLengthMismatchError{numTestRowFeatures, numTrainingSetFeatures}
+}
+
+type NonFloatFeaturesTrainingSetError struct {
+	kNNClassifier
+}
+
+func (e NonFloatFeaturesTrainingSetError) Error() string {
+	return "cannot train on dataset with some non-float features"
+}
+func newNonFloatFeaturesTrainingSetError() NonFloatFeaturesTrainingSetError {
+	return NonFloatFeaturesTrainingSetError{}
+}
+
+type NonFloatFeaturesTestRowError struct{}
+
+func (e NonFloatFeaturesTestRowError) Error() string {
+	return "cannot classify row with some non-float features"
+}
+func newNonFloatFeaturesTestRowError() NonFloatFeaturesTestRowError {
+	return NonFloatFeaturesTestRowError{}
 }

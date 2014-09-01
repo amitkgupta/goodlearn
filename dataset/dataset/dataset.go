@@ -32,7 +32,7 @@ func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType)
 		}
 	}
 
-	return &Dataset{[]float64{}, targetStart, targetEnd, columnTypes, allFeaturesFloats, numColumns - (targetEnd - targetStart)}, nil
+	return &Dataset{[]float64{}, targetStart, targetEnd, columnTypes, allFeaturesFloats, numColumns - (targetEnd - targetStart + 1)}, nil
 }
 
 func (dataset *Dataset) NumRows() int {
@@ -59,10 +59,10 @@ func (dataset *Dataset) Row(i int) (*row.Row, error) {
 
 	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
 	if dataset.targetEnd < numColumns {
-		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd:(i+1)*numColumns]...)
+		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd+1:(i+1)*numColumns]...)
 	}
 
-	return row.UnsafeNewRow(target, rawFeatureValues, dataset.AllFeaturesFloats, dataset.NumFeatures), nil
+	return row.UnsafeNewRow(target, rawFeatureValues, dataset.AllFeaturesFloats), nil
 }
 
 func (dataset *Dataset) AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error {
