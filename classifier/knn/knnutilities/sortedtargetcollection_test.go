@@ -11,44 +11,19 @@ import (
 )
 
 var _ = Describe("SortedTargetCollection", func() {
-	Describe("NewKNNTargetCollection", func() {
-		Context("W given a non-positive k value", func() {
-			It("Does not return an error", func() {
-				_, err := knnutilities.NewKNNTargetCollection(0)
-				Ω(err).Should(HaveOccurred())
-
-				_, err = knnutilities.NewKNNTargetCollection(-1)
-				Ω(err).Should(HaveOccurred())
-			})
-		})
-
-		Context("When given a positive k value", func() {
-			It("Returns an error", func() {
-				_, err := knnutilities.NewKNNTargetCollection(1)
-				Ω(err).ShouldNot(HaveOccurred())
-
-				_, err = knnutilities.NewKNNTargetCollection(50)
-				Ω(err).ShouldNot(HaveOccurred())
-			})
-		})
-	})
-
 	Describe("Insert and MaxDistance", func() {
 		var stc knnutilities.SortedTargetCollection
 
 		BeforeEach(func() {
-			stc, _ = knnutilities.NewKNNTargetCollection(2)
+			stc = knnutilities.NewKNNTargetCollection(2)
 		})
 
 		Context("Before the collection is full", func() {
-			It("Does not return errors", func() {
-				err := stc.Insert(target.Target{}, 1.0)
+			It("The MaxDistance should be +Inf", func() {
 				Ω(stc.MaxDistance()).Should(Equal(math.MaxFloat64))
-				Ω(err).ShouldNot(HaveOccurred())
 
-				err = stc.Insert(target.Target{}, 3.0)
-				Ω(stc.MaxDistance()).Should(Equal(3.0))
-				Ω(err).ShouldNot(HaveOccurred())
+				stc.Insert(target.Target{}, 1.0)
+				Ω(stc.MaxDistance()).Should(Equal(math.MaxFloat64))
 			})
 		})
 
@@ -57,52 +32,41 @@ var _ = Describe("SortedTargetCollection", func() {
 			initialMin := initialMax - 3
 
 			BeforeEach(func() {
-				err := stc.Insert(target.Target{}, initialMin)
-				Ω(err).ShouldNot(HaveOccurred())
-
-				err = stc.Insert(target.Target{}, initialMax)
-				Ω(err).ShouldNot(HaveOccurred())
+				stc.Insert(target.Target{}, initialMax)
+				stc.Insert(target.Target{}, initialMin)
 			})
 
-			Context("When inserting an element with too large a distance", func() {
-				It("Returns an error", func() {
-					err := stc.Insert(target.Target{}, initialMax)
-					Ω(stc.MaxDistance()).Should(Equal(initialMax))
-					Ω(err).Should(HaveOccurred())
+			It("The MaxDistance should be the distance of the 'farthest' target", func() {
+				Ω(stc.MaxDistance()).Should(Equal(initialMax))
+			})
 
-					err = stc.Insert(target.Target{}, initialMax+2)
+			Context("When inserting an element with whose distance is larger than MaxDistance", func() {
+				It("The MaxDistance should not change", func() {
 					Ω(stc.MaxDistance()).Should(Equal(initialMax))
-					Ω(err).Should(HaveOccurred())
+
+					stc.Insert(target.Target{}, initialMax+2)
+					Ω(stc.MaxDistance()).Should(Equal(initialMax))
 				})
 			})
 
-			Context("When inserting an element with a small enough distance", func() {
-				It("Does not return an error", func() {
-					err := stc.Insert(target.Target{}, initialMax-2)
-					Ω(stc.MaxDistance()).Should(Equal(initialMax - 2))
-					Ω(err).ShouldNot(HaveOccurred())
-				})
-
+			Context("When inserting an elements with a small enough distances", func() {
 				It("Behaves as though the distance threshold has properly decreased", func() {
-					err := stc.Insert(target.Target{}, initialMin)
-					Ω(stc.MaxDistance()).Should(Equal(initialMin))
-					Ω(err).ShouldNot(HaveOccurred())
+					Ω(stc.MaxDistance()).Should(Equal(initialMax))
 
-					err = stc.Insert(target.Target{}, initialMin)
+					stc.Insert(target.Target{}, initialMin)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin))
-					Ω(err).Should(HaveOccurred())
 
-					err = stc.Insert(target.Target{}, initialMin-2)
+					stc.Insert(target.Target{}, initialMin)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin))
-					Ω(err).ShouldNot(HaveOccurred())
 
-					err = stc.Insert(target.Target{}, initialMin-1)
+					stc.Insert(target.Target{}, initialMin-2)
+					Ω(stc.MaxDistance()).Should(Equal(initialMin))
+
+					stc.Insert(target.Target{}, initialMin-1)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin - 1))
-					Ω(err).ShouldNot(HaveOccurred())
 
-					err = stc.Insert(target.Target{}, initialMin-1)
+					stc.Insert(target.Target{}, initialMin-1)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin - 1))
-					Ω(err).Should(HaveOccurred())
 				})
 			})
 		})
@@ -111,70 +75,43 @@ var _ = Describe("SortedTargetCollection", func() {
 	Describe("Vote", func() {
 		var stc knnutilities.SortedTargetCollection
 
-		Context("When the collection is empty", func() {
-			BeforeEach(func() {
-				stc, _ = knnutilities.NewKNNTargetCollection(1)
-			})
-
-			It("Returns an error", func() {
-				_, err := stc.Vote()
-				Ω(err).Should(HaveOccurred())
-			})
-		})
-
 		Context("When the collection is not empty", func() {
 			Context("When the collection has fewer than k candidates", func() {
 				BeforeEach(func() {
-					stc, _ = knnutilities.NewKNNTargetCollection(2)
-					err := stc.Insert(target.Target{"hi"}, 23.0)
-					Ω(err).ShouldNot(HaveOccurred())
-				})
-
-				It("Does not return an error", func() {
-					_, err := stc.Vote()
-					Ω(err).ShouldNot(HaveOccurred())
+					stc = knnutilities.NewKNNTargetCollection(2)
+					stc.Insert(target.Target{"hi"}, 23.0)
 				})
 
 				It("Chooses the winner", func() {
-					winner, _ := stc.Vote()
-					Ω(winner.Equals(target.Target{"hi"})).Should(BeTrue())
+					Ω(stc.Vote().Equals(target.Target{"hi"})).Should(BeTrue())
 				})
 			})
 
 			Context("When there is a clear winner", func() {
 				BeforeEach(func() {
-					stc, _ = knnutilities.NewKNNTargetCollection(3)
-					err := stc.Insert(target.Target{"hi"}, 23.0)
-					Ω(err).ShouldNot(HaveOccurred())
-					err = stc.Insert(target.Target{"mom"}, 40.0)
-					Ω(err).ShouldNot(HaveOccurred())
-					err = stc.Insert(target.Target{"mom"}, 42.0)
-					Ω(err).ShouldNot(HaveOccurred())
+					stc = knnutilities.NewKNNTargetCollection(3)
+					stc.Insert(target.Target{"hi"}, 23.0)
+					stc.Insert(target.Target{"mom"}, 40.0)
+					stc.Insert(target.Target{"mom"}, 42.0)
 				})
 
 				It("Chooses the winner", func() {
-					winner, _ := stc.Vote()
-					Ω(winner.Equals(target.Target{"mom"})).Should(BeTrue())
+					Ω(stc.Vote().Equals(target.Target{"mom"})).Should(BeTrue())
 				})
 			})
 
 			Context("When there is a tie", func() {
 				BeforeEach(func() {
-					stc, _ = knnutilities.NewKNNTargetCollection(5)
-					err := stc.Insert(target.Target{"hi", "hello"}, 23.0)
-					Ω(err).ShouldNot(HaveOccurred())
-					err = stc.Insert(target.Target{"mom", "dad"}, 1.0)
-					Ω(err).ShouldNot(HaveOccurred())
-					err = stc.Insert(target.Target{"mom", "dad"}, 42.0)
-					Ω(err).ShouldNot(HaveOccurred())
-					err = stc.Insert(target.Target{"hi", "hello"}, 24.0)
-					Ω(err).ShouldNot(HaveOccurred())
-					err = stc.Insert(target.Target{"mom", "loser"}, 0.5)
-					Ω(err).ShouldNot(HaveOccurred())
+					stc = knnutilities.NewKNNTargetCollection(5)
+					stc.Insert(target.Target{"hi", "hello"}, 23.0)
+					stc.Insert(target.Target{"mom", "dad"}, 1.0)
+					stc.Insert(target.Target{"mom", "dad"}, 42.0)
+					stc.Insert(target.Target{"hi", "hello"}, 24.0)
+					stc.Insert(target.Target{"mom", "loser"}, 0.5)
 				})
 
 				It("Chooses from amongst the tied candidates", func() {
-					winner, _ := stc.Vote()
+					winner := stc.Vote()
 					candidate1 := target.Target{"mom", "dad"}
 					candidate2 := target.Target{"hi", "hello"}
 

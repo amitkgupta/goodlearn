@@ -3,6 +3,7 @@ package knn_test
 import (
 	"github.com/amitkgupta/goodlearn/classifier"
 	"github.com/amitkgupta/goodlearn/classifier/knn"
+	"github.com/amitkgupta/goodlearn/classifier/knn/knnutilities"
 	"github.com/amitkgupta/goodlearn/data/columntype"
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/row"
@@ -57,7 +58,7 @@ var _ = Describe("KNNClassifier", func() {
 			It("Returns an error", func() {
 				err := kNNClassifier.Train(trainingData)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(knn.EmptyTrainingDatasetError{}))
+				Ω(err).Should(BeAssignableToTypeOf(knnutilities.EmptyTrainingDatasetError{}))
 			})
 		})
 
@@ -73,7 +74,7 @@ var _ = Describe("KNNClassifier", func() {
 			It("Returns an error", func() {
 				err := kNNClassifier.Train(trainingData)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(knn.NonFloatFeaturesTrainingSetError{}))
+				Ω(err).Should(BeAssignableToTypeOf(knnutilities.NonFloatFeaturesTrainingSetError{}))
 			})
 		})
 
@@ -111,7 +112,7 @@ var _ = Describe("KNNClassifier", func() {
 			It("Returns an error", func() {
 				_, err := kNNClassifier.Classify(testRow)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(knn.UntrainedClassifierError{}))
+				Ω(err).Should(BeAssignableToTypeOf(knnutilities.UntrainedClassifierError{}))
 			})
 		})
 
@@ -138,7 +139,7 @@ var _ = Describe("KNNClassifier", func() {
 				It("Returns an error", func() {
 					_, err := kNNClassifier.Classify(testRow)
 					Ω(err).Should(HaveOccurred())
-					Ω(err).Should(BeAssignableToTypeOf(knn.RowLengthMismatchError{}))
+					Ω(err).Should(BeAssignableToTypeOf(knnutilities.RowLengthMismatchError{}))
 				})
 			})
 
@@ -150,7 +151,7 @@ var _ = Describe("KNNClassifier", func() {
 				It("Returns an error", func() {
 					_, err := kNNClassifier.Classify(testRow)
 					Ω(err).Should(HaveOccurred())
-					Ω(err).Should(BeAssignableToTypeOf(knn.NonFloatFeaturesTestRowError{}))
+					Ω(err).Should(BeAssignableToTypeOf(knnutilities.NonFloatFeaturesTestRowError{}))
 				})
 			})
 
