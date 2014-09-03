@@ -2,8 +2,10 @@ package csvparse
 
 import (
 	"encoding/csv"
+	"io"
 	"os"
 
+	"github.com/amitkgupta/goodlearn/csvparse/csvparseutilities"
 	"github.com/amitkgupta/goodlearn/data/columntype"
 	"github.com/amitkgupta/goodlearn/data/dataset"
 )
@@ -11,40 +13,35 @@ import (
 func DatasetFromPath(filepath string, targetStart, targetEnd int) (dataset.Dataset, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
-		return nil, err
+		return nil, csvparseutilities.NewUnableToOpenFileError(filepath, err)
 	}
 
 	reader := csv.NewReader(file)
 
 	_, err = reader.Read()
-	firstLine, err := reader.Read()
+	line, err := reader.Read()
 	if err != nil {
-		return nil, err
+		return nil, csvparseutilities.NewUnableToReadTwoLinesError(filepath, err)
 	}
 
-	columnTypes, err := columntype.StringsToColumnTypes(firstLine)
+	columnTypes, err := columntype.StringsToColumnTypes(line)
 	if err != nil {
-		return nil, err
+		return nil, csvparseutilities.NewUnableToParseColumnTypesError(filepath, err)
 	}
 
 	newDataset, err := dataset.NewDataset(targetStart, targetEnd, columnTypes)
 	if err != nil {
-		return nil, err
+		return nil, csvparseutilities.NewUnableToCreateDatasetError(filepath, err)
 	}
 
-	err = newDataset.AddRowFromStrings(targetStart, targetEnd, columnTypes, firstLine)
-	if err != nil {
-		return nil, err
-	}
-
-	for line, err := reader.Read(); err == nil; line, err = reader.Read() {
+	for ; err == nil; line, err = reader.Read() {
 		err = newDataset.AddRowFromStrings(targetStart, targetEnd, columnTypes, line)
 		if err != nil {
-			return nil, err
+			return nil, csvparseutilities.NewUnableToParseRowError(filepath, err)
 		}
 	}
-	if err != nil {
-		return nil, err
+	if err != nil && err != io.EOF {
+		return nil, csvparseutilities.NewGenericError(filepath, err)
 	}
 
 	return newDataset, nil
