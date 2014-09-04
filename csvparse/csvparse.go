@@ -10,7 +10,7 @@ import (
 	"github.com/amitkgupta/goodlearn/data/dataset"
 )
 
-func DatasetFromPath(filepath string, targetStart, targetEnd int) (dataset.Dataset, error) {
+func DatasetFromPath(filepath string, targetStartInclusive, targetEndExclusive int) (dataset.Dataset, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, csvparseutilities.NewUnableToOpenFileError(filepath, err)
@@ -29,13 +29,13 @@ func DatasetFromPath(filepath string, targetStart, targetEnd int) (dataset.Datas
 		return nil, csvparseutilities.NewUnableToParseColumnTypesError(filepath, err)
 	}
 
-	newDataset, err := dataset.NewDataset(targetStart, targetEnd, columnTypes)
+	newDataset, err := dataset.NewDataset(targetStartInclusive, targetEndExclusive, columnTypes)
 	if err != nil {
 		return nil, csvparseutilities.NewUnableToCreateDatasetError(filepath, err)
 	}
 
 	for ; err == nil; line, err = reader.Read() {
-		err = newDataset.AddRowFromStrings(targetStart, targetEnd, columnTypes, line)
+		err = newDataset.AddRowFromStrings(line)
 		if err != nil {
 			return nil, csvparseutilities.NewUnableToParseRowError(filepath, err)
 		}

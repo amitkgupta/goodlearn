@@ -9,23 +9,20 @@ import (
 )
 
 type inMemoryDataset struct {
-	allFeaturesFloats bool
-	numFeatures       int
-
-	targetStart int
-	targetEnd   int
-	columnTypes []columntype.ColumnType
-	rawDataset  []float64
+	allFeaturesFloats    bool
+	allTargetsFloats     bool
+	featureColumnIndices []int
+	targetColumnIndices  []int
+	columnTypes          []columntype.ColumnType
+	rawDataset           []float64
 }
 
-func NewDataset(allFeaturesFloats bool, targetStart, targetEnd int, columnTypes []columntype.ColumnType) *inMemoryDataset {
-	numColumns := len(columnTypes)
-	numFeatures := numColumns - (targetEnd - targetStart + 1)
+func NewDataset(allFeaturesFloats, allTargetsFloats bool, featureColumnIndices, targetColumnIndices []int, columnTypes []columntype.ColumnType) *inMemoryDataset {
 	return &inMemoryDataset{
 		allFeaturesFloats,
-		numFeatures,
-		targetStart,
-		targetEnd,
+		allTargetsFloats,
+		featureColumnIndices,
+		targetColumnIndices,
 		columnTypes,
 		[]float64{},
 	}
@@ -36,12 +33,12 @@ func (dataset *inMemoryDataset) AllFeaturesFloats() bool {
 }
 
 func (dataset *inMemoryDataset) NumFeatures() int {
-	return dataset.numFeatures
+	return len(dataset.featureColumnIndices)
 }
 
-func (dataset *inMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error {
+func (dataset *inMemoryDataset) AddRowFromStrings(strings []string) error {
 	actualLength := len(strings)
-	expectedLength := len(columnTypes)
+	expectedLength := dataset.numColumns()
 
 	if actualLength != expectedLength {
 		return newRowLengthMismatchError(actualLength, expectedLength)
@@ -50,9 +47,7 @@ func (dataset *inMemoryDataset) AddRowFromStrings(targetStart, targetEnd int, co
 	rawValues := make([]float64, actualLength)
 
 	for i, s := range strings {
-		columnType := columnTypes[i]
-
-		value, err := columnType.PersistRawFromString(s)
+		value, err := dataset.columnTypes[i].PersistRawFromString(s)
 		if err != nil {
 			return err
 		}
@@ -75,20 +70,14 @@ func (dataset *inMemoryDataset) Row(i int) (row.Row, error) {
 		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
 	}
 
-	numColumns := dataset.numColumns()
-
-	target := []interface{}{}
-	for j := dataset.targetStart; j <= dataset.targetEnd; j++ {
-		value, err := dataset.valueAt(i, j)
-		if err != nil {
-			return nil, err
-		}
-		target = append(target, value)
+	target := make([]interface{}, len(dataset.targetColumnIndices))
+	for idx, j := range dataset.targetColumnIndices {
+		target[idx] = dataset.valueAt(i, j)
 	}
 
-	rawFeatureValues := dataset.rawDataset[i*numColumns : i*numColumns+dataset.targetStart]
-	if dataset.targetEnd < numColumns {
-		rawFeatureValues = append(rawFeatureValues, dataset.rawDataset[i*numColumns+dataset.targetEnd+1:(i+1)*numColumns]...)
+	rawFeatureValues := make([]float64, dataset.NumFeatures())
+	for idx, j := range dataset.featureColumnIndices {
+		rawFeatureValues[idx] = dataset.rawValueAt(i, j)
 	}
 
 	return row.NewRow(dataset.AllFeaturesFloats(), target, rawFeatureValues), nil
@@ -98,22 +87,25 @@ func (dataset *inMemoryDataset) numColumns() int {
 	return len(dataset.columnTypes)
 }
 
-func (dataset *inMemoryDataset) valueAt(rowIndex, columnIndex int) (interface{}, error) {
+func (dataset *inMemoryDataset) valueAt(rowIndex, columnIndex int) interface{} {
 	columnType := dataset.columnTypes[columnIndex]
-	rawValue := dataset.rawDataset[rowIndex*dataset.numColumns()+columnIndex]
-
-	var value interface{}
-	var err error
+	rawValue := dataset.rawValueAt(rowIndex, columnIndex)
 
 	if floatColumnType, ok := columnType.(columntype.FloatColumnType); ok {
-		value, err = floatColumnType.ValueFromRaw(rawValue)
+		value, _ := floatColumnType.ValueFromRaw(rawValue)
+		return value
 	} else if stringColumnType, ok := columnType.(columntype.StringColumnType); ok {
-		value, err = stringColumnType.ValueFromRaw(rawValue)
+		value, _ := stringColumnType.ValueFromRaw(rawValue)
+		return value
 	} else {
-		value, err = nil, newUnknownColumnTypeError(columnIndex)
+		// bad
+		panic("Unknown column type")
+		return nil
 	}
+}
 
-	return value, err
+func (dataset *inMemoryDataset) rawValueAt(rowIndex, columnIndex int) float64 {
+	return dataset.rawDataset[rowIndex*dataset.numColumns()+columnIndex]
 }
 
 func newUnknownColumnTypeError(columnIndex int) error {

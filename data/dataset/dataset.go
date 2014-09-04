@@ -13,48 +13,79 @@ type Dataset interface {
 	AllFeaturesFloats() bool
 	NumFeatures() int
 
-	AddRowFromStrings(targetStart, targetEnd int, columnTypes []columntype.ColumnType, strings []string) error
+	AddRowFromStrings(strings []string) error
 	NumRows() int
 	Row(i int) (row.Row, error)
 }
 
-func NewDataset(targetStart, targetEnd int, columnTypes []columntype.ColumnType) (Dataset, error) {
+func NewDataset(targetStartInclusive, targetEndExclusive int, columnTypes []columntype.ColumnType) (Dataset, error) {
 	numColumns := len(columnTypes)
 
-	if targetOutOfBounds(targetStart, targetEnd, numColumns) {
-		return nil, newTargetOutOfBoundsError(targetStart, targetEnd, numColumns)
+	if targetOutOfBounds(targetStartInclusive, targetEndExclusive, numColumns) {
+		return nil, newTargetOutOfBoundsError(targetStartInclusive, targetEndExclusive, numColumns)
 	}
 
+	featureColumnIndices := featureColumnIndices(targetStartInclusive, targetEndExclusive, numColumns)
+	targetColumnIndices := targetColumnIndices(targetStartInclusive, targetEndExclusive, numColumns)
+
 	allFeaturesFloats := true
-	for i, columnType := range columnTypes {
-		_, ok := columnType.(columntype.FloatColumnType)
-		if !ok && (i < targetStart || i > targetEnd) {
+	for _, i := range featureColumnIndices {
+		if _, ok := columnTypes[i].(columntype.FloatColumnType); !ok {
 			allFeaturesFloats = false
+			break
+		}
+	}
+
+	allTargetsFloats := true
+	for _, i := range targetColumnIndices {
+		if _, ok := columnTypes[i].(columntype.FloatColumnType); !ok {
+			allTargetsFloats = false
 			break
 		}
 	}
 
 	return inmemorydataset.NewDataset(
 		allFeaturesFloats,
-		targetStart,
-		targetEnd,
+		allTargetsFloats,
+		featureColumnIndices,
+		targetColumnIndices,
 		columnTypes,
 	), nil
 }
 
-func targetOutOfBounds(targetStart, targetEnd, numColumns int) bool {
-	return targetStart < 0 ||
-		targetEnd >= numColumns ||
-		targetStart > targetEnd ||
-		(targetEnd-targetStart) >= (numColumns-1)
+func featureColumnIndices(targetStartInclusive, targetEndExclusive, numColumns int) []int {
+	result := []int{}
+	for i := 0; i < numColumns; i++ {
+		if i < targetStartInclusive || i >= targetEndExclusive {
+			result = append(result, i)
+		}
+	}
+	return result
 }
 
-func newTargetOutOfBoundsError(targetStart, targetEnd, numColumns int) error {
+func targetColumnIndices(targetStartInclusive, targetEndExclusive, numColumns int) []int {
+	result := []int{}
+	for i := 0; i < numColumns; i++ {
+		if i >= targetStartInclusive && i < targetEndExclusive {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
+func targetOutOfBounds(targetStartInclusive, targetEndExclusive, numColumns int) bool {
+	return targetStartInclusive < 0 ||
+		targetEndExclusive > numColumns ||
+		targetStartInclusive >= targetEndExclusive ||
+		(targetEndExclusive-targetStartInclusive) >= (numColumns)
+}
+
+func newTargetOutOfBoundsError(targetStartInclusive, targetEndExclusive, numColumns int) error {
 	return errors.New(fmt.Sprintf(
 		"Dataset must have valid target bounds, and at least one non-target column; "+
 			"cannot have %d total columns, target start column %d and target end column %d",
 		numColumns,
-		targetStart,
-		targetEnd,
+		targetStartInclusive,
+		targetEndExclusive,
 	))
 }
