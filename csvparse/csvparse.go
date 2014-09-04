@@ -29,10 +29,16 @@ func DatasetFromPath(filepath string, targetStartInclusive, targetEndExclusive i
 		return nil, csvparseutilities.NewUnableToParseColumnTypesError(filepath, err)
 	}
 
-	newDataset, err := dataset.NewDataset(targetStartInclusive, targetEndExclusive, columnTypes)
-	if err != nil {
-		return nil, csvparseutilities.NewUnableToCreateDatasetError(filepath, err)
+	numColumns := len(columnTypes)
+	if targetOutOfBounds(targetStartInclusive, targetEndExclusive, numColumns) {
+		return nil, csvparseutilities.NewTargetOutOfBoundsError(filepath, targetStartInclusive, targetEndExclusive, numColumns)
 	}
+
+	newDataset := dataset.NewDataset(
+		featureColumnIndices(targetStartInclusive, targetEndExclusive, numColumns),
+		targetColumnIndices(targetStartInclusive, targetEndExclusive, numColumns),
+		columnTypes,
+	)
 
 	for ; err == nil; line, err = reader.Read() {
 		err = newDataset.AddRowFromStrings(line)
@@ -45,4 +51,31 @@ func DatasetFromPath(filepath string, targetStartInclusive, targetEndExclusive i
 	}
 
 	return newDataset, nil
+}
+
+func featureColumnIndices(targetStartInclusive, targetEndExclusive, numColumns int) []int {
+	result := []int{}
+	for i := 0; i < numColumns; i++ {
+		if i < targetStartInclusive || i >= targetEndExclusive {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
+func targetColumnIndices(targetStartInclusive, targetEndExclusive, numColumns int) []int {
+	result := []int{}
+	for i := 0; i < numColumns; i++ {
+		if i >= targetStartInclusive && i < targetEndExclusive {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
+func targetOutOfBounds(targetStartInclusive, targetEndExclusive, numColumns int) bool {
+	return targetStartInclusive < 0 ||
+		targetEndExclusive > numColumns ||
+		targetStartInclusive >= targetEndExclusive ||
+		(targetEndExclusive-targetStartInclusive) >= (numColumns)
 }

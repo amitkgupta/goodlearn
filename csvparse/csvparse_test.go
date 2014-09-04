@@ -78,7 +78,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/good.csv", 1, 7)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToCreateDatasetError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.TargetOutOfBoundsError{}))
 
 			})
 		})

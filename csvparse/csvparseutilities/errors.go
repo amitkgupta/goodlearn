@@ -13,8 +13,14 @@ func NewUnableToReadTwoLinesError(filepath string, err error) UnableToReadTwoLin
 func NewUnableToParseColumnTypesError(filepath string, err error) UnableToParseColumnTypesError {
 	return UnableToParseColumnTypesError{filepath, err}
 }
-func NewUnableToCreateDatasetError(filepath string, err error) UnableToCreateDatasetError {
-	return UnableToCreateDatasetError{filepath, err}
+
+func NewTargetOutOfBoundsError(filepath string, targetStartInclusive, targetEndExclusive, numColumns int) error {
+	return TargetOutOfBoundsError{
+		filepath,
+		targetStartInclusive,
+		targetEndExclusive,
+		numColumns,
+	}
 }
 func NewUnableToParseRowError(filepath string, err error) UnableToParseRowError {
 	return UnableToParseRowError{filepath, err}
@@ -30,7 +36,12 @@ type baseError struct {
 type UnableToOpenFileError baseError
 type UnableToReadTwoLinesError baseError
 type UnableToParseColumnTypesError baseError
-type UnableToCreateDatasetError baseError
+type TargetOutOfBoundsError struct {
+	filepath             string
+	targetStartInclusive int
+	targetEndExclusive   int
+	numColumns           int
+}
 type UnableToParseRowError baseError
 type GenericError baseError
 
@@ -43,8 +54,16 @@ func (e UnableToReadTwoLinesError) Error() string {
 func (e UnableToParseColumnTypesError) Error() string {
 	return fmt.Sprintf("Unable to parse column types for '%s': %s", e.filepath, e.err.Error())
 }
-func (e UnableToCreateDatasetError) Error() string {
-	return fmt.Sprintf("Unable to create dataset from '%s': %s", e.filepath, e.err.Error())
+func (e TargetOutOfBoundsError) Error() string {
+	return fmt.Sprintf(
+		"Unable to create dataset from '%s'; columns must have valid target bounds, and at least one non-target column; "+
+			"cannot have %d total columns, target start column %d and target end column %d",
+		e.filepath,
+		e.numColumns,
+		e.targetStartInclusive,
+		e.targetEndExclusive,
+	)
+
 }
 func (e UnableToParseRowError) Error() string {
 	return fmt.Sprintf("Unable to parse some row in '%s': %s", e.filepath, e.err.Error())

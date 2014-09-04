@@ -51,8 +51,7 @@ var _ = Describe("KNNClassifier", func() {
 				columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
-				trainingData, err = dataset.NewDataset(0, 1, columnTypes)
-				Ω(err).ShouldNot(HaveOccurred())
+				trainingData = dataset.NewDataset([]int{1, 2}, []int{0}, columnTypes)
 			})
 
 			It("Returns an error", func() {
@@ -67,8 +66,7 @@ var _ = Describe("KNNClassifier", func() {
 				columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "bye", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
-				trainingData, err = dataset.NewDataset(0, 1, columnTypes)
-				Ω(err).ShouldNot(HaveOccurred())
+				trainingData = dataset.NewDataset([]int{1, 2}, []int{0}, columnTypes)
 			})
 
 			It("Returns an error", func() {
@@ -83,8 +81,7 @@ var _ = Describe("KNNClassifier", func() {
 				columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
-				trainingData, err = dataset.NewDataset(0, 1, columnTypes)
-				Ω(err).ShouldNot(HaveOccurred())
+				trainingData = dataset.NewDataset([]int{1, 2}, []int{0}, columnTypes)
 
 				err = trainingData.AddRowFromStrings([]string{"hi", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
@@ -121,8 +118,7 @@ var _ = Describe("KNNClassifier", func() {
 				columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
-				trainingData, err := dataset.NewDataset(0, 1, columnTypes)
-				Ω(err).ShouldNot(HaveOccurred())
+				trainingData := dataset.NewDataset([]int{1, 2}, []int{0}, columnTypes)
 
 				err = trainingData.AddRowFromStrings([]string{"hi", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
