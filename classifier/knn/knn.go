@@ -4,7 +4,7 @@ import (
 	"github.com/amitkgupta/goodlearn/classifier/knn/knnutilities"
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/row"
-	"github.com/amitkgupta/goodlearn/data/target"
+	"github.com/amitkgupta/goodlearn/data/slice"
 )
 
 func NewKNNClassifier(k int) (*kNNClassifier, error) {
@@ -33,7 +33,7 @@ func (classifier *kNNClassifier) Train(trainingData dataset.Dataset) error {
 	return nil
 }
 
-func (classifier *kNNClassifier) Classify(testRow row.Row) (target.Target, error) {
+func (classifier *kNNClassifier) Classify(testRow row.Row) (slice.Slice, error) {
 	trainingData := classifier.trainingData
 	if trainingData == nil {
 		return nil, knnutilities.NewUntrainedClassifierError()
@@ -45,20 +45,20 @@ func (classifier *kNNClassifier) Classify(testRow row.Row) (target.Target, error
 		return nil, knnutilities.NewRowLengthMismatchError(numTestRowFeatures, numTrainingDataFeatures)
 	}
 
-	floatFeatureTestRow, ok := testRow.(row.FloatFeatureRow)
+	testFeatures, ok := testRow.Features().(slice.FloatSlice)
 	if !ok {
 		return nil, knnutilities.NewNonFloatFeaturesTestRowError()
 	}
-	testRowFeatureValues := floatFeatureTestRow.Features()
+	testFeatureValues := testFeatures.Values()
 
 	nearestNeighbours := knnutilities.NewKNNTargetCollection(classifier.k)
 
 	for i := 0; i < trainingData.NumRows(); i++ {
 		trainingRow, _ := trainingData.Row(i)
-		floatFeatureTrainingRow, _ := trainingRow.(row.FloatFeatureRow)
-		trainingRowFeatureValues := floatFeatureTrainingRow.Features()
+		trainingFeatures, _ := trainingRow.Features().(slice.FloatSlice)
+		trainingFeatureValues := trainingFeatures.Values()
 
-		distance := knnutilities.Euclidean(testRowFeatureValues, trainingRowFeatureValues, nearestNeighbours.MaxDistance())
+		distance := knnutilities.Euclidean(testFeatureValues, trainingFeatureValues, nearestNeighbours.MaxDistance())
 		if distance < nearestNeighbours.MaxDistance() {
 			nearestNeighbours.Insert(trainingRow.Target(), distance)
 		}

@@ -2,7 +2,8 @@ package knnutilities_test
 
 import (
 	"github.com/amitkgupta/goodlearn/classifier/knn/knnutilities"
-	"github.com/amitkgupta/goodlearn/data/target"
+	"github.com/amitkgupta/goodlearn/data/columntype"
+	"github.com/amitkgupta/goodlearn/data/slice"
 
 	"math"
 
@@ -13,16 +14,20 @@ import (
 var _ = Describe("SortedTargetCollection", func() {
 	Describe("Insert and MaxDistance", func() {
 		var stc knnutilities.SortedTargetCollection
+		var target slice.Slice
+		var err error
 
 		BeforeEach(func() {
 			stc = knnutilities.NewKNNTargetCollection(2)
+			target, err = slice.SliceFromRawValues(true, []int{}, []columntype.ColumnType{}, []float64{})
+			Ω(err).ShouldNot(HaveOccurred())
 		})
 
 		Context("Before the collection is full", func() {
 			It("The MaxDistance should be +Inf", func() {
 				Ω(stc.MaxDistance()).Should(Equal(math.MaxFloat64))
 
-				stc.Insert(target.Target{}, 1.0)
+				stc.Insert(target, 1.0)
 				Ω(stc.MaxDistance()).Should(Equal(math.MaxFloat64))
 			})
 		})
@@ -32,8 +37,8 @@ var _ = Describe("SortedTargetCollection", func() {
 			initialMin := initialMax - 3
 
 			BeforeEach(func() {
-				stc.Insert(target.Target{}, initialMax)
-				stc.Insert(target.Target{}, initialMin)
+				stc.Insert(target, initialMax)
+				stc.Insert(target, initialMin)
 			})
 
 			It("The MaxDistance should be the distance of the 'farthest' target", func() {
@@ -44,7 +49,7 @@ var _ = Describe("SortedTargetCollection", func() {
 				It("The MaxDistance should not change", func() {
 					Ω(stc.MaxDistance()).Should(Equal(initialMax))
 
-					stc.Insert(target.Target{}, initialMax+2)
+					stc.Insert(target, initialMax+2)
 					Ω(stc.MaxDistance()).Should(Equal(initialMax))
 				})
 			})
@@ -53,19 +58,19 @@ var _ = Describe("SortedTargetCollection", func() {
 				It("Behaves as though the distance threshold has properly decreased", func() {
 					Ω(stc.MaxDistance()).Should(Equal(initialMax))
 
-					stc.Insert(target.Target{}, initialMin)
+					stc.Insert(target, initialMin)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin))
 
-					stc.Insert(target.Target{}, initialMin)
+					stc.Insert(target, initialMin)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin))
 
-					stc.Insert(target.Target{}, initialMin-2)
+					stc.Insert(target, initialMin-2)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin))
 
-					stc.Insert(target.Target{}, initialMin-1)
+					stc.Insert(target, initialMin-1)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin - 1))
 
-					stc.Insert(target.Target{}, initialMin-1)
+					stc.Insert(target, initialMin-1)
 					Ω(stc.MaxDistance()).Should(Equal(initialMin - 1))
 				})
 			})
@@ -76,46 +81,68 @@ var _ = Describe("SortedTargetCollection", func() {
 		var stc knnutilities.SortedTargetCollection
 
 		Context("When the collection is not empty", func() {
+			var target1, target2, target3 slice.Slice
+
+			BeforeEach(func() {
+				stc = knnutilities.NewKNNTargetCollection(5)
+
+				columnTypes, err := columntype.StringsToColumnTypes([]string{"1.0"})
+				Ω(err).ShouldNot(HaveOccurred())
+
+				raw1, err := columnTypes[0].PersistRawFromString("1.0")
+				Ω(err).ShouldNot(HaveOccurred())
+
+				raw2, err := columnTypes[0].PersistRawFromString("2.0")
+				Ω(err).ShouldNot(HaveOccurred())
+
+				raw3, err := columnTypes[0].PersistRawFromString("3.0")
+				Ω(err).ShouldNot(HaveOccurred())
+
+				target1, err = slice.SliceFromRawValues(true, []int{0}, columnTypes, []float64{raw1})
+				target2, err = slice.SliceFromRawValues(true, []int{0}, columnTypes, []float64{raw2})
+				target3, err = slice.SliceFromRawValues(true, []int{0}, columnTypes, []float64{raw3})
+			})
+
 			Context("When the collection has fewer than k candidates", func() {
 				BeforeEach(func() {
-					stc = knnutilities.NewKNNTargetCollection(2)
-					stc.Insert(target.Target{"hi"}, 23.0)
+					stc.Insert(target1, 23.0)
 				})
 
 				It("Chooses the winner", func() {
-					Ω(stc.Vote().Equals(target.Target{"hi"})).Should(BeTrue())
+					winner := stc.Vote()
+					Ω(target1.Equals(winner)).Should(BeTrue())
 				})
 			})
 
 			Context("When there is a clear winner", func() {
 				BeforeEach(func() {
-					stc = knnutilities.NewKNNTargetCollection(3)
-					stc.Insert(target.Target{"hi"}, 23.0)
-					stc.Insert(target.Target{"mom"}, 40.0)
-					stc.Insert(target.Target{"mom"}, 42.0)
+					stc.Insert(target1, 23.0)
+					stc.Insert(target2, 40.0)
+					stc.Insert(target2, 50.0)
+					stc.Insert(target2, 90.0)
+					stc.Insert(target3, 10.0)
 				})
 
 				It("Chooses the winner", func() {
-					Ω(stc.Vote().Equals(target.Target{"mom"})).Should(BeTrue())
+					winner := stc.Vote()
+					Ω(target2.Equals(winner)).Should(BeTrue())
 				})
 			})
 
 			Context("When there is a tie", func() {
 				BeforeEach(func() {
 					stc = knnutilities.NewKNNTargetCollection(5)
-					stc.Insert(target.Target{"hi", "hello"}, 23.0)
-					stc.Insert(target.Target{"mom", "dad"}, 1.0)
-					stc.Insert(target.Target{"mom", "dad"}, 42.0)
-					stc.Insert(target.Target{"hi", "hello"}, 24.0)
-					stc.Insert(target.Target{"mom", "loser"}, 0.5)
+					stc.Insert(target1, 23.0)
+					stc.Insert(target2, 1.0)
+					stc.Insert(target2, 42.0)
+					stc.Insert(target3, 24.0)
+					stc.Insert(target3, 0.5)
 				})
 
 				It("Chooses from amongst the tied candidates", func() {
 					winner := stc.Vote()
-					candidate1 := target.Target{"mom", "dad"}
-					candidate2 := target.Target{"hi", "hello"}
 
-					Ω(winner.Equals(candidate1) || winner.Equals(candidate2)).Should(BeTrue())
+					Ω(winner.Equals(target2) || winner.Equals(target3)).Should(BeTrue())
 				})
 			})
 		})

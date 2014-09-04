@@ -3,13 +3,13 @@ package knnutilities
 import (
 	"math"
 
-	"github.com/amitkgupta/goodlearn/data/target"
+	"github.com/amitkgupta/goodlearn/data/slice"
 )
 
 type SortedTargetCollection interface {
-	Insert(target.Target, float64)
+	Insert(slice.Slice, float64)
 	MaxDistance() float64
-	Vote() target.Target
+	Vote() slice.Slice
 }
 
 type kNNTargetCollection struct {
@@ -18,7 +18,7 @@ type kNNTargetCollection struct {
 }
 
 type targetWithDistance struct {
-	target   target.Target
+	target   slice.Slice
 	distance float64
 }
 
@@ -26,7 +26,7 @@ func NewKNNTargetCollection(k int) *kNNTargetCollection {
 	return &kNNTargetCollection{k, make([]targetWithDistance, 0, k)}
 }
 
-func (stc *kNNTargetCollection) Insert(target target.Target, distance float64) {
+func (stc *kNNTargetCollection) Insert(target slice.Slice, distance float64) {
 	newTargetWithDistance := targetWithDistance{target, distance}
 
 	for i, twd := range stc.targetCollection {
@@ -52,7 +52,7 @@ func (stc *kNNTargetCollection) MaxDistance() float64 {
 	return stc.targetCollection[stc.k-1].distance
 }
 
-func (stc *kNNTargetCollection) Vote() target.Target {
+func (stc *kNNTargetCollection) Vote() slice.Slice {
 	winner := stc.targetCollection[0].target
 	votesForWinner := 0
 

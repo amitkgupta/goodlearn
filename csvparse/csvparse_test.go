@@ -3,8 +3,7 @@ package csvparse_test
 import (
 	"github.com/amitkgupta/goodlearn/csvparse"
 	"github.com/amitkgupta/goodlearn/csvparse/csvparseutilities"
-	"github.com/amitkgupta/goodlearn/data/row"
-	"github.com/amitkgupta/goodlearn/data/target"
+	"github.com/amitkgupta/goodlearn/data/slice"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -98,11 +97,14 @@ var _ = Describe("Csvparse", func() {
 
 				secondRow, err := dataset.Row(1)
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(secondRow.Target().Equals(target.Target{"x", 3.2, "y"})).Should(BeTrue())
 
-				floatFeatureSecondRow, ok := secondRow.(row.FloatFeatureRow)
+				target, ok := secondRow.Target().(slice.MixedSlice)
 				Ω(ok).Should(BeTrue())
-				Ω(floatFeatureSecondRow.Features()).Should(Equal([]float64{-22e8, 1.0, 7.0}))
+				Ω(target.Values()).Should(Equal([]interface{}{"x", 3.2, "y"}))
+
+				features, ok := secondRow.Features().(slice.FloatSlice)
+				Ω(ok).Should(BeTrue())
+				Ω(features.Values()).Should(Equal([]float64{-22e8, 1.0, 7.0}))
 			})
 		})
 	})

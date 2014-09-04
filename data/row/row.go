@@ -1,30 +1,33 @@
 package row
 
 import (
-	"github.com/amitkgupta/goodlearn/data/row/floatfeaturerow"
-	"github.com/amitkgupta/goodlearn/data/row/mixedfeaturerow"
-	"github.com/amitkgupta/goodlearn/data/target"
+	"github.com/amitkgupta/goodlearn/data/slice"
 )
 
 type Row interface {
-	Target() target.Target
+	Features() slice.Slice
+	Target() slice.Slice
 	NumFeatures() int
 }
 
-type MixedFeatureRow interface {
-	Row
-	Features() []interface{}
+type row struct {
+	features    slice.Slice
+	target      slice.Slice
+	numFeatures int
 }
 
-type FloatFeatureRow interface {
-	Row
-	Features() []float64
+func NewRow(features, target slice.Slice, numFeatures int) Row {
+	return &row{features, target, numFeatures}
 }
 
-func NewRow(allFeaturesFloats bool, target target.Target, rawFeatureValues []float64) Row {
-	if allFeaturesFloats {
-		return floatfeaturerow.NewFloatFeatureRow(target, rawFeatureValues)
-	} else {
-		return mixedfeaturerow.NewMixedFeatureRow(target, rawFeatureValues)
-	}
+func (r *row) Features() slice.Slice {
+	return r.features
+}
+
+func (r *row) Target() slice.Slice {
+	return r.target
+}
+
+func (r *row) NumFeatures() int {
+	return r.numFeatures
 }

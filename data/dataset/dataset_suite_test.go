@@ -1,4 +1,4 @@
-package target_test
+package dataset_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestTarget(t *testing.T) {
+func TestDataset(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Target Suite")
+	RunSpecs(t, "Dataset Suite")
 }

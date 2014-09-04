@@ -7,7 +7,7 @@ import (
 	"github.com/amitkgupta/goodlearn/data/columntype"
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/row"
-	"github.com/amitkgupta/goodlearn/data/target"
+	"github.com/amitkgupta/goodlearn/data/slice"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -96,14 +96,33 @@ var _ = Describe("KNNClassifier", func() {
 
 	Describe("Classify", func() {
 		var testRow row.Row
+		var emptyTarget slice.Slice
+		var columnTypes []columntype.ColumnType
+		var err error
+		var helloRaw float64
 
 		BeforeEach(func() {
 			kNNClassifier, _ = knn.NewKNNClassifier(1)
+
+			columnTypes, err = columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
+			Ω(err).ShouldNot(HaveOccurred())
+
+			emptyTarget, err = slice.SliceFromRawValues(true, []int{}, columnTypes, []float64{})
+			Ω(err).ShouldNot(HaveOccurred())
+
+			columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
+			Ω(err).ShouldNot(HaveOccurred())
+
+			helloRaw, err = columnTypes[0].PersistRawFromString("val")
+			Ω(err).ShouldNot(HaveOccurred())
 		})
 
 		Context("When the classifier hasn't been trained", func() {
 			BeforeEach(func() {
-				testRow = row.NewRow(true, target.Target{"bye"}, []float64{1})
+				features, err := slice.SliceFromRawValues(true, []int{1}, columnTypes, []float64{helloRaw, 1, 2})
+				Ω(err).ShouldNot(HaveOccurred())
+
+				testRow = row.NewRow(features, emptyTarget, 1)
 			})
 
 			It("Returns an error", func() {
@@ -115,7 +134,7 @@ var _ = Describe("KNNClassifier", func() {
 
 		Context("When the classifier has been trained", func() {
 			BeforeEach(func() {
-				columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
+				columnTypes, err = columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
 				trainingData := dataset.NewDataset([]int{1, 2}, []int{0}, columnTypes)
@@ -129,7 +148,10 @@ var _ = Describe("KNNClassifier", func() {
 
 			Context("When number of test features does not equal number of training features", func() {
 				BeforeEach(func() {
-					testRow = row.NewRow(true, target.Target{}, []float64{1})
+					features, err := slice.SliceFromRawValues(true, []int{1}, columnTypes, []float64{helloRaw, 1, 2})
+					Ω(err).ShouldNot(HaveOccurred())
+
+					testRow = row.NewRow(features, emptyTarget, 1)
 				})
 
 				It("Returns an error", func() {
@@ -141,7 +163,10 @@ var _ = Describe("KNNClassifier", func() {
 
 			Context("When the test row's features are not all floats", func() {
 				BeforeEach(func() {
-					testRow = row.NewRow(false, target.Target{}, []float64{1, 2})
+					features, err := slice.SliceFromRawValues(false, []int{0, 1}, columnTypes, []float64{helloRaw, 1, 2})
+					Ω(err).ShouldNot(HaveOccurred())
+
+					testRow = row.NewRow(features, emptyTarget, 2)
 				})
 
 				It("Returns an error", func() {
@@ -153,13 +178,19 @@ var _ = Describe("KNNClassifier", func() {
 
 			Context("When the test row is compatible with the training data", func() {
 				BeforeEach(func() {
-					testRow = row.NewRow(true, target.Target{}, []float64{1, 2})
+					features, err := slice.SliceFromRawValues(true, []int{1, 2}, columnTypes, []float64{helloRaw, 3.3, 1.0})
+					Ω(err).ShouldNot(HaveOccurred())
+
+					testRow = row.NewRow(features, emptyTarget, 2)
 				})
 
 				It("Classifies the test row", func() {
 					classifiedTarget, err := kNNClassifier.Classify(testRow)
 					Ω(err).ShouldNot(HaveOccurred())
-					Ω(classifiedTarget).Should(Equal(target.Target{"hi"}))
+
+					expectedTarget, err := slice.SliceFromRawValues(false, []int{0}, columnTypes, []float64{helloRaw, 99, 55})
+					Ω(err).ShouldNot(HaveOccurred())
+					Ω(classifiedTarget.Equals(expectedTarget)).Should(BeTrue())
 				})
 			})
 		})

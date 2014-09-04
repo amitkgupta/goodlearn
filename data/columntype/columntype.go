@@ -1,10 +1,9 @@
 package columntype
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
-
-	"github.com/amitkgupta/goodlearn/data/columntype/floatcolumntype"
-	"github.com/amitkgupta/goodlearn/data/columntype/stringcolumntype"
 )
 
 type ColumnType interface {
@@ -21,6 +20,14 @@ type StringColumnType interface {
 	ValueFromRaw(float64) (string, error)
 }
 
+type floatType struct{}
+
+type stringType struct {
+	counter  float64
+	encoding map[string]float64
+	decoding map[float64]string
+}
+
 func StringsToColumnTypes(strings []string) ([]ColumnType, error) {
 	types := make([]ColumnType, len(strings))
 
@@ -28,15 +35,57 @@ func StringsToColumnTypes(strings []string) ([]ColumnType, error) {
 		_, err := strconv.ParseFloat(s, 64)
 
 		if err == nil {
-			types[i] = floatcolumntype.NewFloatType()
+			types[i] = &floatType{}
 		} else {
 			if err.(*strconv.NumError).Err == strconv.ErrSyntax {
-				types[i] = stringcolumntype.NewStringType()
+				types[i] = &stringType{
+					0,
+					make(map[string]float64),
+					make(map[float64]string),
+				}
 			} else {
-				return nil, err
+				return nil, newUnableToParseLargeFloatError(s)
 			}
 		}
 	}
 
 	return types, nil
+}
+
+func (ft *floatType) ValueFromRaw(x float64) (float64, error) {
+	return x, nil
+}
+
+func (ft *floatType) PersistRawFromString(s string) (float64, error) {
+	return strconv.ParseFloat(s, 64)
+}
+
+func (st *stringType) ValueFromRaw(raw float64) (string, error) {
+	value, ok := st.decoding[raw]
+	if !ok {
+		return "", newUnknownCodeError(raw)
+	}
+
+	return value, nil
+}
+
+func (st *stringType) PersistRawFromString(s string) (float64, error) {
+	value, ok := st.encoding[s]
+	if ok {
+		return value, nil
+	}
+
+	st.encoding[s] = st.counter
+	st.decoding[st.counter] = s
+	st.counter++
+
+	return st.encoding[s], nil
+}
+
+func newUnknownCodeError(raw float64) error {
+	return errors.New(fmt.Sprintf("Unknown code %v", raw))
+}
+
+func newUnableToParseLargeFloatError(s string) error {
+	return errors.New(fmt.Sprintf("Unable to parse '%s' into 64-bit float"))
 }

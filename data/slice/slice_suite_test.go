@@ -1,4 +1,4 @@
-package row_test
+package slice_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestRow(t *testing.T) {
+func TestSlice(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Row Suite")
+	RunSpecs(t, "Slice Suite")
 }
