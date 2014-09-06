@@ -11,7 +11,10 @@ import (
 
 type Dataset interface {
 	AllFeaturesFloats() bool
+	AllTargetsFloats() bool
+
 	NumFeatures() int
+	NumTargets() int
 
 	AddRowFromStrings(strings []string) error
 	NumRows() int
@@ -25,6 +28,7 @@ type inMemoryDataset struct {
 	targetColumnIndices  []int
 	columnTypes          []columntype.ColumnType
 	numFeatures          int
+	numTargets           int
 	numColumns           int
 	rawDataset           []float64
 }
@@ -53,6 +57,7 @@ func NewDataset(featureColumnIndices, targetColumnIndices []int, columnTypes []c
 		targetColumnIndices,
 		columnTypes,
 		len(featureColumnIndices),
+		len(targetColumnIndices),
 		len(columnTypes),
 		[]float64{},
 	}
@@ -62,8 +67,16 @@ func (dataset *inMemoryDataset) AllFeaturesFloats() bool {
 	return dataset.allFeaturesFloats
 }
 
+func (dataset *inMemoryDataset) AllTargetsFloats() bool {
+	return dataset.allTargetsFloats
+}
+
 func (dataset *inMemoryDataset) NumFeatures() int {
 	return dataset.numFeatures
+}
+
+func (dataset *inMemoryDataset) NumTargets() int {
+	return dataset.numTargets
 }
 
 func (dataset *inMemoryDataset) AddRowFromStrings(strings []string) error {
