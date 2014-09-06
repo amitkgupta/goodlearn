@@ -14,7 +14,7 @@ install:
 
 script: ginkgo -r --randomizeAllSpecs --failOnPending --randomizeSuites --race --cover
 
-after_script:
+after_success:
   - gover
   - goveralls -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
 
