@@ -4,6 +4,8 @@ import (
 	"github.com/amitkgupta/goodlearn/data/columntype"
 	"github.com/amitkgupta/goodlearn/data/slice"
 
+	"math"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -87,20 +89,34 @@ var _ = Describe("Slice", func() {
 			})
 
 			Describe("When told some entires are not floats", func() {
-				BeforeEach(func() {
-					rawValues := []float64{1.2, col1val0raw, 0, col3val1raw, 4.9, 2.2}
-					s, err = slice.SliceFromRawValues(false, columnIndices, columnTypes, rawValues)
+				Context("When the raw values corresponding to string entries are valid for their columns", func() {
+					BeforeEach(func() {
+						rawValues := []float64{1.2, col1val0raw, 0, col3val1raw, 4.9, 2.2}
+						s, err = slice.SliceFromRawValues(false, columnIndices, columnTypes, rawValues)
+					})
+
+					It("Does not return an error", func() {
+						Ω(err).ShouldNot(HaveOccurred())
+					})
+
+					It("Returns a mixed slice with the correct values", func() {
+						mixedSlice, ok := s.(slice.MixedSlice)
+						Ω(ok).Should(BeTrue())
+
+						Ω(mixedSlice.Values()).Should(Equal([]interface{}{"col1val0", 4.9, "col3val1"}))
+					})
 				})
 
-				It("Does not return an error", func() {
-					Ω(err).ShouldNot(HaveOccurred())
-				})
+				Context("When some raw values corresponding to string entries are invalid for their columns", func() {
+					BeforeEach(func() {
+						invalidColumn1RawValue := math.Abs(col1val0raw) + math.Abs(col1val1raw) + 1
+						rawValues := []float64{1.2, invalidColumn1RawValue, 0, col3val1raw, 4.9, 2.2}
+						s, err = slice.SliceFromRawValues(false, columnIndices, columnTypes, rawValues)
+					})
 
-				It("Returns a mixed slice with the correct values", func() {
-					mixedSlice, ok := s.(slice.MixedSlice)
-					Ω(ok).Should(BeTrue())
-
-					Ω(mixedSlice.Values()).Should(Equal([]interface{}{"col1val0", 4.9, "col3val1"}))
+					It("Returns an error", func() {
+						Ω(err).Should(HaveOccurred())
+					})
 				})
 			})
 		})
