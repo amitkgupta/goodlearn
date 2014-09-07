@@ -120,25 +120,19 @@ func (dataset *inMemoryDataset) Row(i int) (row.Row, error) {
 		rawValues = dataset.rawDataset[i*dataset.numColumns : (i+1)*dataset.numColumns]
 	}
 
-	features, err := slice.SliceFromRawValues(
+	features, _ := slice.SliceFromRawValues(
 		dataset.allFeaturesFloats,
 		dataset.featureColumnIndices,
 		dataset.columnTypes,
 		rawValues,
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	target, err := slice.SliceFromRawValues(
+	target, _ := slice.SliceFromRawValues(
 		dataset.allTargetsFloats,
 		dataset.targetColumnIndices,
 		dataset.columnTypes,
 		rawValues,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	return row.NewRow(features, target, dataset.numFeatures), nil
 }
