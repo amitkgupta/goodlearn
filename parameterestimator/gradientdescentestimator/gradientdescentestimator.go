@@ -1,12 +1,10 @@
 package gradientdescentestimator
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/slice"
 	"github.com/amitkgupta/goodlearn/optimizer/gradientdescent"
+	gdeUtilities "github.com/amitkgupta/goodlearn/parameterestimator/gradientdescentestimator/gradientdescentestimatorutilities"
 	"github.com/amitkgupta/goodlearn/vectorutilities"
 )
 
@@ -26,13 +24,7 @@ func NewGradientDescentParameterEstimator(
 	plgf ParameterizedLossGradient,
 ) (*gradientDescentParameterEstimator, error) {
 	if learningRate <= 0 || precision <= 0 || maxIterations <= 0 {
-		return nil, errors.New(fmt.Sprintf(
-			"Learning rate, precision, and max iterations are %.4f, %.4f, %d; "+
-				"they must all be positive",
-			learningRate,
-			precision,
-			maxIterations,
-		))
+		return nil, gdeUtilities.NewInvalidGDPEInitializationValuesError(learningRate, precision, maxIterations)
 	}
 
 	return &gradientDescentParameterEstimator{
@@ -45,23 +37,23 @@ func NewGradientDescentParameterEstimator(
 
 func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
 	if ds.NumRows() == 0 {
-		return errors.New("Cannot perform parameter estimation using empty dataset")
+		return gdeUtilities.NewEmptyTrainingSetError()
 	}
 
 	if !ds.AllFeaturesFloats() {
-		return errors.New("Cannot perform parameter estimation on dataset with non-float features")
+		return gdeUtilities.NewNonFloatFeaturesError()
 	}
 
 	if !ds.AllTargetsFloats() {
-		return errors.New("Cannot perform parameter estimation on dataset with non-float target")
+		return gdeUtilities.NewNonFloatTargetError()
 	}
 
 	if ds.NumTargets() != 1 {
-		return errors.New("Can only perform parameter estimation on dataset with 1 target value")
+		return gdeUtilities.NewInvalidNumberOfTargetsError(ds.NumTargets())
 	}
 
 	if ds.NumFeatures() == 0 {
-		return errors.New("Cannot perform parameter estimation on dataset with no feature values")
+		return gdeUtilities.NewNoFeaturesError()
 	}
 
 	gdpe.trainingSet = ds
@@ -70,11 +62,11 @@ func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
 
 func (gdpe *gradientDescentParameterEstimator) Estimate(initialParameters []float64) ([]float64, error) {
 	if gdpe.trainingSet == nil {
-		return nil, errors.New("Cannot perform estimation with an untrained estimator")
+		return nil, gdeUtilities.NewUntrainedEstimatorError()
 	}
 
 	if len(initialParameters) == 0 {
-		return nil, errors.New("Initial parameters must not be empty")
+		return nil, gdeUtilities.NewEmptyInitialParametersError()
 	}
 
 	gradient := func(guess []float64) ([]float64, error) {

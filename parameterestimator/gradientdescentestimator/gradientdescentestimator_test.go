@@ -5,8 +5,8 @@ import (
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/parameterestimator"
 	"github.com/amitkgupta/goodlearn/parameterestimator/gradientdescentestimator"
+	gdeUtilities "github.com/amitkgupta/goodlearn/parameterestimator/gradientdescentestimator/gradientdescentestimatorutilities"
 
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -28,7 +28,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 					lossGradient,
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidGDPEInitializationValuesError{}))
 			})
 		})
 
@@ -41,7 +41,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 					lossGradient,
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidGDPEInitializationValuesError{}))
 			})
 		})
 
@@ -54,7 +54,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 					lossGradient,
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidGDPEInitializationValuesError{}))
 			})
 		})
 
@@ -67,7 +67,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 					lossGradient,
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidGDPEInitializationValuesError{}))
 			})
 		})
 
@@ -80,7 +80,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 					lossGradient,
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidGDPEInitializationValuesError{}))
 			})
 		})
 
@@ -93,7 +93,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 					lossGradient,
 				)
 
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidGDPEInitializationValuesError{}))
 			})
 		})
 
@@ -136,7 +136,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 
 			It("Returns an error", func() {
 				err := estimator.Train(trainingSet)
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.EmptyTrainingSetError{}))
 			})
 		})
 
@@ -153,7 +153,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 
 			It("Returns an error", func() {
 				err := estimator.Train(trainingSet)
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.NonFloatFeaturesError{}))
 			})
 		})
 
@@ -170,7 +170,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 
 			It("Returns an error", func() {
 				err := estimator.Train(trainingSet)
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.NonFloatTargetError{}))
 			})
 		})
 
@@ -187,24 +187,24 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 
 			It("Returns an error", func() {
 				err := estimator.Train(trainingSet)
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.InvalidNumberOfTargetsError{}))
 			})
 		})
 
 		Context("Given a dataset with no features", func() {
 			BeforeEach(func() {
-				columnTypes, err := columntype.StringsToColumnTypes([]string{"1.0", "1.0"})
+				columnTypes, err := columntype.StringsToColumnTypes([]string{"1.0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
-				trainingSet = dataset.NewDataset([]int{}, []int{0, 1}, columnTypes)
+				trainingSet = dataset.NewDataset([]int{}, []int{0}, columnTypes)
 
-				err = trainingSet.AddRowFromStrings([]string{"3.14", "24"})
+				err = trainingSet.AddRowFromStrings([]string{"3.14"})
 				Ω(err).ShouldNot(HaveOccurred())
 			})
 
 			It("Returns an error", func() {
 				err := estimator.Train(trainingSet)
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.NoFeaturesError{}))
 			})
 		})
 
@@ -244,7 +244,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 		Context("When the estimator hasn't been trained", func() {
 			It("Returns an error", func() {
 				_, err := estimator.Estimate([]float64{0.02, 0.1, 0.1, 0.1})
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.UntrainedEstimatorError{}))
 			})
 		})
 
@@ -256,7 +256,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 
 			It("Returns an error", func() {
 				_, err := estimator.Estimate([]float64{})
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(BeAssignableToTypeOf(gdeUtilities.EmptyInitialParametersError{}))
 			})
 		})
 
@@ -268,7 +268,7 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 
 			It("Returns an error", func() {
 				_, err := estimator.Estimate([]float64{0.01})
-				Ω(err).Should(HaveOccurred())
+				Ω(err).Should(Equal(testError{1}))
 			})
 		})
 
@@ -316,17 +316,11 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 		// least squares cubic fit with penalty for cubic coefficient
 		lossGradient = func(guess, x []float64, y float64) ([]float64, error) {
 			if len(guess) != 4 {
-				return nil, errors.New(fmt.Sprintf(
-					"Need 4 parameters for cubic fit, got %d",
-					len(guess),
-				))
+				return nil, testError{1}
 			}
 
 			if len(x) != 1 {
-				return nil, errors.New(fmt.Sprintf(
-					"Need 1 x value for single-varuable cubic fit, got %d",
-					len(x),
-				))
+				return nil, testError{2}
 			}
 
 			x0 := x[0]
@@ -347,3 +341,11 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 		}
 	})
 })
+
+type testError struct {
+	code int
+}
+
+func (e testError) Error() string {
+	return "test error"
+}
