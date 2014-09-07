@@ -71,7 +71,7 @@ var _ = Describe("Linear Model Least Squares Parameter Estimation", func() {
 				Ω(estimatedParameters).Should(HaveLen(3))
 
 				for i := 0; i < 3; i++ {
-					Ω(estimatedParameters[i]).Should(BeNumerically("~", trueParameters[i], 0.005))
+					Ω(estimatedParameters[i]).Should(BeNumerically("~", trueParameters[i], 0.01))
 				}
 			})
 		})
