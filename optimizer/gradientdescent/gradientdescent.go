@@ -8,15 +8,15 @@ import (
 	"github.com/amitkgupta/goodlearn/vectorutilities"
 )
 
-type Gradient func([]float64) ([]float64, error)
-
 func GradientDescent(
 	initialGuess []float64,
 	learningRate, precision float64,
 	maxIterations int,
-	gradient Gradient,
+	gradient func([]float64) ([]float64, error),
 ) ([]float64, error) {
-	// bad, check some dimensions?
+	if len(initialGuess) == 0 {
+		return nil, errors.New("initialGuess cannot be empty")
+	}
 
 	oldResult := make([]float64, len(initialGuess))
 	newResult := make([]float64, len(initialGuess))
@@ -30,13 +30,7 @@ func GradientDescent(
 
 		newResult = vectorutilities.Add(oldResult, vectorutilities.Scale(-learningRate, gradientAtOldResult))
 
-		// bad, do this better
-		if math.IsInf(newResult[0], 0) || math.IsNaN(newResult[0]) {
-			return nil, errors.New("Inf or Nan")
-		}
-
-		// bad, investigate sqrt
-		if (knnutilities.Euclidean(newResult, oldResult, precision)) < precision {
+		if (knnutilities.Euclidean(newResult, oldResult, precision)) < math.Pow(precision, 2) {
 			return newResult, nil
 		} else {
 			oldResult = newResult
