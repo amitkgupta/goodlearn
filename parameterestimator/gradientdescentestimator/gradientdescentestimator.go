@@ -3,8 +3,8 @@ package gradientdescentestimator
 import (
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/slice"
+	gdeErrors "github.com/amitkgupta/goodlearn/errors/parameterestimator/gradientdescentestimatorerrors"
 	"github.com/amitkgupta/goodlearn/optimizer/gradientdescent"
-	gdeUtilities "github.com/amitkgupta/goodlearn/parameterestimator/gradientdescentestimator/gradientdescentestimatorutilities"
 	"github.com/amitkgupta/goodlearn/vectorutilities"
 )
 
@@ -24,7 +24,7 @@ func NewGradientDescentParameterEstimator(
 	plgf ParameterizedLossGradient,
 ) (*gradientDescentParameterEstimator, error) {
 	if learningRate <= 0 || precision <= 0 || maxIterations <= 0 {
-		return nil, gdeUtilities.NewInvalidGDPEInitializationValuesError(learningRate, precision, maxIterations)
+		return nil, gdeErrors.NewInvalidGDPEInitializationValuesError(learningRate, precision, maxIterations)
 	}
 
 	return &gradientDescentParameterEstimator{
@@ -37,23 +37,23 @@ func NewGradientDescentParameterEstimator(
 
 func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
 	if ds.NumRows() == 0 {
-		return gdeUtilities.NewEmptyTrainingSetError()
+		return gdeErrors.NewEmptyTrainingSetError()
 	}
 
 	if !ds.AllFeaturesFloats() {
-		return gdeUtilities.NewNonFloatFeaturesError()
+		return gdeErrors.NewNonFloatFeaturesError()
 	}
 
 	if !ds.AllTargetsFloats() {
-		return gdeUtilities.NewNonFloatTargetError()
+		return gdeErrors.NewNonFloatTargetError()
 	}
 
 	if ds.NumTargets() != 1 {
-		return gdeUtilities.NewInvalidNumberOfTargetsError(ds.NumTargets())
+		return gdeErrors.NewInvalidNumberOfTargetsError(ds.NumTargets())
 	}
 
 	if ds.NumFeatures() == 0 {
-		return gdeUtilities.NewNoFeaturesError()
+		return gdeErrors.NewNoFeaturesError()
 	}
 
 	gdpe.trainingSet = ds
@@ -62,11 +62,11 @@ func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
 
 func (gdpe *gradientDescentParameterEstimator) Estimate(initialParameters []float64) ([]float64, error) {
 	if gdpe.trainingSet == nil {
-		return nil, gdeUtilities.NewUntrainedEstimatorError()
+		return nil, gdeErrors.NewUntrainedEstimatorError()
 	}
 
 	if len(initialParameters) == 0 {
-		return nil, gdeUtilities.NewEmptyInitialParametersError()
+		return nil, gdeErrors.NewEmptyInitialParametersError()
 	}
 
 	gradient := func(guess []float64) ([]float64, error) {

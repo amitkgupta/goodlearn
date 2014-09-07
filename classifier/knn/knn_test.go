@@ -3,11 +3,11 @@ package knn_test
 import (
 	"github.com/amitkgupta/goodlearn/classifier"
 	"github.com/amitkgupta/goodlearn/classifier/knn"
-	"github.com/amitkgupta/goodlearn/classifier/knn/knnutilities"
 	"github.com/amitkgupta/goodlearn/data/columntype"
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/row"
 	"github.com/amitkgupta/goodlearn/data/slice"
+	"github.com/amitkgupta/goodlearn/errors/classifier/knnerrors"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -57,7 +57,7 @@ var _ = Describe("KNNClassifier", func() {
 			It("Returns an error", func() {
 				err := kNNClassifier.Train(trainingData)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(knnutilities.EmptyTrainingDatasetError{}))
+				Ω(err).Should(BeAssignableToTypeOf(knnerrors.EmptyTrainingDatasetError{}))
 			})
 		})
 
@@ -72,7 +72,7 @@ var _ = Describe("KNNClassifier", func() {
 			It("Returns an error", func() {
 				err := kNNClassifier.Train(trainingData)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(knnutilities.NonFloatFeaturesTrainingSetError{}))
+				Ω(err).Should(BeAssignableToTypeOf(knnerrors.NonFloatFeaturesTrainingSetError{}))
 			})
 		})
 
@@ -128,7 +128,7 @@ var _ = Describe("KNNClassifier", func() {
 			It("Returns an error", func() {
 				_, err := kNNClassifier.Classify(testRow)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(knnutilities.UntrainedClassifierError{}))
+				Ω(err).Should(BeAssignableToTypeOf(knnerrors.UntrainedClassifierError{}))
 			})
 		})
 
@@ -157,7 +157,7 @@ var _ = Describe("KNNClassifier", func() {
 				It("Returns an error", func() {
 					_, err := kNNClassifier.Classify(testRow)
 					Ω(err).Should(HaveOccurred())
-					Ω(err).Should(BeAssignableToTypeOf(knnutilities.RowLengthMismatchError{}))
+					Ω(err).Should(BeAssignableToTypeOf(knnerrors.RowLengthMismatchError{}))
 				})
 			})
 
@@ -172,7 +172,7 @@ var _ = Describe("KNNClassifier", func() {
 				It("Returns an error", func() {
 					_, err := kNNClassifier.Classify(testRow)
 					Ω(err).Should(HaveOccurred())
-					Ω(err).Should(BeAssignableToTypeOf(knnutilities.NonFloatFeaturesTestRowError{}))
+					Ω(err).Should(BeAssignableToTypeOf(knnerrors.NonFloatFeaturesTestRowError{}))
 				})
 			})
 

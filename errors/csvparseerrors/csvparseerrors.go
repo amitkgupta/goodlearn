@@ -1,4 +1,4 @@
-package csvparseutilities
+package csvparseerrors
 
 import (
 	"fmt"

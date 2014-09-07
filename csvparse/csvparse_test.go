@@ -2,8 +2,8 @@ package csvparse_test
 
 import (
 	"github.com/amitkgupta/goodlearn/csvparse"
-	"github.com/amitkgupta/goodlearn/csvparse/csvparseutilities"
 	"github.com/amitkgupta/goodlearn/data/slice"
+	"github.com/amitkgupta/goodlearn/errors/csvparseerrors"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,7 +15,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/nonexistent.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToOpenFileError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.UnableToOpenFileError{}))
 			})
 		})
 
@@ -23,7 +23,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/empty.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToReadTwoLinesError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.UnableToReadTwoLinesError{}))
 
 			})
 		})
@@ -32,7 +32,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/oneline.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToReadTwoLinesError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.UnableToReadTwoLinesError{}))
 
 			})
 		})
@@ -41,7 +41,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/badrowwidths.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.GenericError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.GenericError{}))
 
 			})
 		})
@@ -50,7 +50,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/badcolumntypes.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToParseRowError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.UnableToParseRowError{}))
 
 			})
 		})
@@ -59,7 +59,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/badfloatfirstdatarow.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToParseColumnTypesError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.UnableToParseColumnTypesError{}))
 
 			})
 		})
@@ -68,7 +68,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/badfloatlaterdatarow.csv", 1, 4)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.UnableToParseRowError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.UnableToParseRowError{}))
 
 			})
 		})
@@ -77,7 +77,7 @@ var _ = Describe("Csvparse", func() {
 			It("Returns an error", func() {
 				_, err := csvparse.DatasetFromPath("testassets/good.csv", 1, 7)
 				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(BeAssignableToTypeOf(csvparseutilities.TargetOutOfBoundsError{}))
+				Ω(err).Should(BeAssignableToTypeOf(csvparseerrors.TargetOutOfBoundsError{}))
 
 			})
 		})

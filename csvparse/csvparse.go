@@ -5,15 +5,15 @@ import (
 	"io"
 	"os"
 
-	"github.com/amitkgupta/goodlearn/csvparse/csvparseutilities"
 	"github.com/amitkgupta/goodlearn/data/columntype"
 	"github.com/amitkgupta/goodlearn/data/dataset"
+	"github.com/amitkgupta/goodlearn/errors/csvparseerrors"
 )
 
 func DatasetFromPath(filepath string, targetStartInclusive, targetEndExclusive int) (dataset.Dataset, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
-		return nil, csvparseutilities.NewUnableToOpenFileError(filepath, err)
+		return nil, csvparseerrors.NewUnableToOpenFileError(filepath, err)
 	}
 
 	reader := csv.NewReader(file)
@@ -21,17 +21,17 @@ func DatasetFromPath(filepath string, targetStartInclusive, targetEndExclusive i
 	_, err = reader.Read()
 	line, err := reader.Read()
 	if err != nil {
-		return nil, csvparseutilities.NewUnableToReadTwoLinesError(filepath, err)
+		return nil, csvparseerrors.NewUnableToReadTwoLinesError(filepath, err)
 	}
 
 	columnTypes, err := columntype.StringsToColumnTypes(line)
 	if err != nil {
-		return nil, csvparseutilities.NewUnableToParseColumnTypesError(filepath, err)
+		return nil, csvparseerrors.NewUnableToParseColumnTypesError(filepath, err)
 	}
 
 	numColumns := len(columnTypes)
 	if targetOutOfBounds(targetStartInclusive, targetEndExclusive, numColumns) {
-		return nil, csvparseutilities.NewTargetOutOfBoundsError(filepath, targetStartInclusive, targetEndExclusive, numColumns)
+		return nil, csvparseerrors.NewTargetOutOfBoundsError(filepath, targetStartInclusive, targetEndExclusive, numColumns)
 	}
 
 	newDataset := dataset.NewDataset(
@@ -43,11 +43,11 @@ func DatasetFromPath(filepath string, targetStartInclusive, targetEndExclusive i
 	for ; err == nil; line, err = reader.Read() {
 		err = newDataset.AddRowFromStrings(line)
 		if err != nil {
-			return nil, csvparseutilities.NewUnableToParseRowError(filepath, err)
+			return nil, csvparseerrors.NewUnableToParseRowError(filepath, err)
 		}
 	}
 	if err != nil && err != io.EOF {
-		return nil, csvparseutilities.NewGenericError(filepath, err)
+		return nil, csvparseerrors.NewGenericError(filepath, err)
 	}
 
 	return newDataset, nil

@@ -5,11 +5,12 @@ import (
 	"github.com/amitkgupta/goodlearn/data/dataset"
 	"github.com/amitkgupta/goodlearn/data/row"
 	"github.com/amitkgupta/goodlearn/data/slice"
+	"github.com/amitkgupta/goodlearn/errors/classifier/knnerrors"
 )
 
 func NewKNNClassifier(k int) (*kNNClassifier, error) {
 	if k < 1 {
-		return nil, knnutilities.NewInvalidNumberOfNeighboursError(k)
+		return nil, knnerrors.NewInvalidNumberOfNeighboursError(k)
 	}
 
 	return &kNNClassifier{k: k}, nil
@@ -22,11 +23,11 @@ type kNNClassifier struct {
 
 func (classifier *kNNClassifier) Train(trainingData dataset.Dataset) error {
 	if !trainingData.AllFeaturesFloats() {
-		return knnutilities.NewNonFloatFeaturesTrainingSetError()
+		return knnerrors.NewNonFloatFeaturesTrainingSetError()
 	}
 
 	if trainingData.NumRows() == 0 {
-		return knnutilities.NewEmptyTrainingDatasetError()
+		return knnerrors.NewEmptyTrainingDatasetError()
 	}
 
 	classifier.trainingData = trainingData
@@ -36,18 +37,18 @@ func (classifier *kNNClassifier) Train(trainingData dataset.Dataset) error {
 func (classifier *kNNClassifier) Classify(testRow row.Row) (slice.Slice, error) {
 	trainingData := classifier.trainingData
 	if trainingData == nil {
-		return nil, knnutilities.NewUntrainedClassifierError()
+		return nil, knnerrors.NewUntrainedClassifierError()
 	}
 
 	numTestRowFeatures := testRow.NumFeatures()
 	numTrainingDataFeatures := trainingData.NumFeatures()
 	if numTestRowFeatures != numTrainingDataFeatures {
-		return nil, knnutilities.NewRowLengthMismatchError(numTestRowFeatures, numTrainingDataFeatures)
+		return nil, knnerrors.NewRowLengthMismatchError(numTestRowFeatures, numTrainingDataFeatures)
 	}
 
 	testFeatures, ok := testRow.Features().(slice.FloatSlice)
 	if !ok {
-		return nil, knnutilities.NewNonFloatFeaturesTestRowError()
+		return nil, knnerrors.NewNonFloatFeaturesTestRowError()
 	}
 	testFeatureValues := testFeatures.Values()
 

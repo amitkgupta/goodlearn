@@ -1,4 +1,4 @@
-package gradientdescentestimatorutilities
+package gradientdescentestimatorerrors
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package knnutilities
+package knnerrors
 
 import (
 	"fmt"
