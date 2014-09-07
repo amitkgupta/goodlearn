@@ -56,4 +56,40 @@ var _ = Describe("GradientDescent", func() {
 			Ω(estimatedArgMin[1]).Should(BeNumerically("~", 0.0, 0.005))
 		})
 	})
+
+	Context("Context given a relatively small maximum for number of iterations", func() {
+		var estimatedArgMin []float64
+		var err error
+
+		BeforeEach(func() {
+			estimatedArgMin, err = gradientdescent.GradientDescent([]float64{0.3, -0.4}, 0.0005, 0.00000005, 1, goodGradient)
+		})
+
+		It("Does not return an error", func() {
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+
+		It("Returns an estimate close to the initial guess because it didn't run many iterations", func() {
+			Ω(estimatedArgMin[0]).Should(BeNumerically("~", 0.3, 0.05))
+			Ω(estimatedArgMin[1]).Should(BeNumerically("~", -0.4, 0.05))
+		})
+	})
+
+	Context("Context given a relatively large precision", func() {
+		var estimatedArgMin []float64
+		var err error
+
+		BeforeEach(func() {
+			estimatedArgMin, err = gradientdescent.GradientDescent([]float64{0.3, -0.4}, 0.0005, 1, 1000000000, goodGradient)
+		})
+
+		It("Does not return an error", func() {
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+
+		It("Returns an estimate close to the initial guess because it's already precise enough", func() {
+			Ω(estimatedArgMin[0]).Should(BeNumerically("~", 0.3, 0.05))
+			Ω(estimatedArgMin[1]).Should(BeNumerically("~", -0.4, 0.05))
+		})
+	})
 })
