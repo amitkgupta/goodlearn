@@ -12,7 +12,7 @@ type ColumnType interface {
 
 type FloatColumnType interface {
 	ColumnType
-	ValueFromRaw(float64) (float64, error)
+	ValueFromRaw(float64) float64
 }
 
 type StringColumnType interface {
@@ -52,8 +52,8 @@ func StringsToColumnTypes(strings []string) ([]ColumnType, error) {
 	return types, nil
 }
 
-func (ft *floatType) ValueFromRaw(x float64) (float64, error) {
-	return x, nil
+func (ft *floatType) ValueFromRaw(x float64) float64 {
+	return x
 }
 
 func (ft *floatType) PersistRawFromString(s string) (float64, error) {

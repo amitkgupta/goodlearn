@@ -54,9 +54,8 @@ var _ = Describe("Column Type", func() {
 
 		Describe("ValueFromRaw", func() {
 			It("Returns the given value and doesn't return an error", func() {
-				value, err := floatColumnType.ValueFromRaw(3.14)
+				value := floatColumnType.ValueFromRaw(3.14)
 				Ω(value).Should(Equal(3.14))
-				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 

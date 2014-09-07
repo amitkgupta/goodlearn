@@ -44,10 +44,7 @@ func SliceFromRawValues(
 
 		for idx, i := range columnIndices {
 			if floatColumnType, ok := columnTypes[i].(columntype.FloatColumnType); ok {
-				values[idx], err = floatColumnType.ValueFromRaw(rawValues[i])
-				if err != nil {
-					return nil, err
-				}
+				values[idx] = floatColumnType.ValueFromRaw(rawValues[i])
 			} else {
 				return nil, newExpectedAllColumnsFloatsError(i, columnIndices)
 			}
@@ -59,10 +56,7 @@ func SliceFromRawValues(
 
 		for idx, i := range columnIndices {
 			if floatColumnType, ok := columnTypes[i].(columntype.FloatColumnType); ok {
-				values[idx], err = floatColumnType.ValueFromRaw(rawValues[i])
-				if err != nil {
-					return nil, err
-				}
+				values[idx] = floatColumnType.ValueFromRaw(rawValues[i])
 			} else if stringColumnType, ok := columnTypes[i].(columntype.StringColumnType); ok {
 				values[idx], err = stringColumnType.ValueFromRaw(rawValues[i])
 				if err != nil {
