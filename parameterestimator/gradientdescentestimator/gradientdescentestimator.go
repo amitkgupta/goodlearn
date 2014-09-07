@@ -45,7 +45,7 @@ func NewGradientDescentParameterEstimator(
 
 func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
 	if ds.NumRows() == 0 {
-		return errors.New("Cannot perform estimation using empty dataset")
+		return errors.New("Cannot perform parameter estimation using empty dataset")
 	}
 
 	if !ds.AllFeaturesFloats() {
@@ -57,7 +57,7 @@ func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
 	}
 
 	if ds.NumTargets() != 1 {
-		return errors.New("Cannot perform parameter estimation on dataset with 1 target value")
+		return errors.New("Can only perform parameter estimation on dataset with 1 target value")
 	}
 
 	if ds.NumFeatures() == 0 {
