@@ -2,7 +2,6 @@ package gradientdescent
 
 import (
 	"errors"
-	"math"
 
 	"github.com/amitkgupta/goodlearn/classifier/knn/knnutilities"
 	"github.com/amitkgupta/goodlearn/vectorutilities"
@@ -30,7 +29,7 @@ func GradientDescent(
 
 		newResult = vectorutilities.Add(oldResult, vectorutilities.Scale(-learningRate, gradientAtOldResult))
 
-		if (knnutilities.Euclidean(newResult, oldResult, precision)) < math.Pow(precision, 2) {
+		if (knnutilities.Euclidean(newResult, oldResult, precision)) < precision*precision {
 			return newResult, nil
 		} else {
 			oldResult = newResult
