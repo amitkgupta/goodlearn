@@ -14,8 +14,8 @@ script: ginkgo -r --randomizeAllSpecs --failOnPending --randomizeSuites --race -
 after_success:
 - gover
 - goveralls -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
-- curl -k -X POST $TRIGGER_BENCHMARK_URL
+- curl -k -X POST $TRIGGER_BENCHMARKS_URL
 env:
   global:
     - secure: "YAkTSGi7Ek9BAFg6ICOgpVXuXeQvnG1QvYeO4XyENVxRRXoefQ3UGB3UI3KY8HMXxOAyXqbJPq9w44c8gq+a6J52pTKgDluH0qOB8otpIsDWqlUMJJhG7zV/m71zOuQDch2R0iccKeu0jP5XBErAvr41Cj/0+t1Nf+eMjv8vQKU=" # COVERALLS_TOKEN
-    - secure: "ZjGxon8BOguHcWYDROYiwYkIoWjC0qIqvGzBj8osWNxM3pBDc7TJFxv7gS1rEdPl2nkmzU+EPYvKtyomh3yaN6u4SRv0xOe84uQL3Kqq6kwegXEMt3tbWDwNyf5aYPAJBTjAC9/EaKaA8fYVxpI/gWOQ4fjN3tJb00/eRWVd7ug=" # TRIGGER_BENCHMARK_URL
+    - secure: "AAiKr2LVKaTGpgAcuyQwdKohiAQMh/yo1lK/BMA1BObx1chQjlLnsiNHpISI5CgHgrox5wY53cugwo7ilSwoTmWXw4K/3LT+AgNaVMUJYMKWHrQff5KtplXf5EKcAbtZZJHSwSNTm7DvQKE00CX+/7YIyUBOjM92weYwILZFLfM=" # TRIGGER_BENCHMARKS_URL
