@@ -1,22 +1,22 @@
 language: go
 go:
-  - 1.3
-
+- 1.3
 install:
-  - go get code.google.com/p/go.tools/cmd/cover
-  - go get github.com/modocache/gover
-  - go get github.com/mattn/goveralls
-  - go get github.com/onsi/gomega
-  - go get github.com/onsi/ginkgo
-  - go install github.com/onsi/ginkgo/ginkgo
-  - go get -v ./...
-  - export PATH=$PATH:$HOME/gopath/bin
-
+- go get code.google.com/p/go.tools/cmd/cover
+- go get github.com/modocache/gover
+- go get github.com/mattn/goveralls
+- go get github.com/onsi/gomega
+- go get github.com/onsi/ginkgo
+- go install github.com/onsi/ginkgo/ginkgo
+- go get -v ./...
+- export PATH=$PATH:$HOME/gopath/bin
 script: ginkgo -r --randomizeAllSpecs --failOnPending --randomizeSuites --race --cover
-
 after_success:
-  - gover
-  - goveralls -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
-
+- gover
+- goveralls -coverprofile=gover.coverprofile -repotoken $COVERALLS_TOKEN
+- curl -k -X POST $TRIGGER_BENCHMARK_URL
 env:
-  - secure: "YAkTSGi7Ek9BAFg6ICOgpVXuXeQvnG1QvYeO4XyENVxRRXoefQ3UGB3UI3KY8HMXxOAyXqbJPq9w44c8gq+a6J52pTKgDluH0qOB8otpIsDWqlUMJJhG7zV/m71zOuQDch2R0iccKeu0jP5XBErAvr41Cj/0+t1Nf+eMjv8vQKU=" #COVERALLS_TOKEN
+  matrix:
+  - secure: YAkTSGi7Ek9BAFg6ICOgpVXuXeQvnG1QvYeO4XyENVxRRXoefQ3UGB3UI3KY8HMXxOAyXqbJPq9w44c8gq+a6J52pTKgDluH0qOB8otpIsDWqlUMJJhG7zV/m71zOuQDch2R0iccKeu0jP5XBErAvr41Cj/0+t1Nf+eMjv8vQKU=
+  global:
+    secure: ROT9APKQWvxptmfHD+5UtEJEBeDN4MBW5gXUG3LtIEEKnvktDTT5mvFbgsvwHn5pYC9EekdSGuW++8+W+VKaOT9LmssamJQoFtyOvL7UZwAJU5N+Wr0Jqysg0ksPqKDDDw0rXfDn67HwZBQytBA1wBjoyN1SQHuU7yEFCGgMJAw=
