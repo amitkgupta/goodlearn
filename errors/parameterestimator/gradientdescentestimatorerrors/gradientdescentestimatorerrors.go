@@ -8,9 +8,6 @@ func NewInvalidGDPEInitializationValuesError(learningRate, precision float64, ma
 	return InvalidGDPEInitializationValuesError{learningRate, precision, maxIterations}
 }
 
-func NewEmptyTrainingSetError() EmptyTrainingSetError {
-	return EmptyTrainingSetError{}
-}
 func NewNonFloatFeaturesError() NonFloatFeaturesError {
 	return NonFloatFeaturesError{}
 }
@@ -37,7 +34,6 @@ type InvalidGDPEInitializationValuesError struct {
 	maxIterations int
 }
 
-type EmptyTrainingSetError struct{}
 type NonFloatFeaturesError struct{}
 type NonFloatTargetError struct{}
 type InvalidNumberOfTargetsError struct {
@@ -58,9 +54,6 @@ func (e InvalidGDPEInitializationValuesError) Error() string {
 	)
 }
 
-func (e EmptyTrainingSetError) Error() string {
-	return "Cannot perform parameter estimation using empty dataset"
-}
 func (e NonFloatFeaturesError) Error() string {
 	return "Cannot perform parameter estimation on dataset with non-float features"
 }

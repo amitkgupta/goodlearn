@@ -36,10 +36,6 @@ func NewGradientDescentParameterEstimator(
 }
 
 func (gdpe *gradientDescentParameterEstimator) Train(ds dataset.Dataset) error {
-	if ds.NumRows() == 0 {
-		return gdeErrors.NewEmptyTrainingSetError()
-	}
-
 	if !ds.AllFeaturesFloats() {
 		return gdeErrors.NewNonFloatFeaturesError()
 	}

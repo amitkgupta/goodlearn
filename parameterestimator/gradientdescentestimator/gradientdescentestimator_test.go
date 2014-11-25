@@ -126,20 +126,6 @@ var _ = Describe("Gradient Descent Parameter Estimation", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
-		Context("Given an empty dataset", func() {
-			BeforeEach(func() {
-				columnTypes, err := columntype.StringsToColumnTypes([]string{"1.0", "1.0"})
-				Ω(err).ShouldNot(HaveOccurred())
-
-				trainingSet = dataset.NewDataset([]int{0}, []int{1}, columnTypes)
-			})
-
-			It("Returns an error", func() {
-				err := estimator.Train(trainingSet)
-				Ω(err).Should(BeAssignableToTypeOf(gdeErrors.EmptyTrainingSetError{}))
-			})
-		})
-
 		Context("Given a dataset with non-float features", func() {
 			BeforeEach(func() {
 				columnTypes, err := columntype.StringsToColumnTypes([]string{"x", "1.0"})

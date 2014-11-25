@@ -110,10 +110,7 @@ var _ = Describe("KNNClassifier", func() {
 			emptyTarget, err = slice.SliceFromRawValues(true, []int{}, columnTypes, []float64{})
 			Ω(err).ShouldNot(HaveOccurred())
 
-			columnTypes, err := columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
-			Ω(err).ShouldNot(HaveOccurred())
-
-			helloRaw, err = columnTypes[0].PersistRawFromString("val")
+			helloRaw, err = columnTypes[0].PersistRawFromString("hello")
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
@@ -134,12 +131,9 @@ var _ = Describe("KNNClassifier", func() {
 
 		Context("When the classifier has been trained", func() {
 			BeforeEach(func() {
-				columnTypes, err = columntype.StringsToColumnTypes([]string{"hi", "0", "0"})
-				Ω(err).ShouldNot(HaveOccurred())
-
 				trainingData := dataset.NewDataset([]int{1, 2}, []int{0}, columnTypes)
 
-				err = trainingData.AddRowFromStrings([]string{"hi", "0", "0"})
+				err = trainingData.AddRowFromStrings([]string{"hello", "0", "0"})
 				Ω(err).ShouldNot(HaveOccurred())
 
 				err = kNNClassifier.Train(trainingData)
@@ -178,7 +172,10 @@ var _ = Describe("KNNClassifier", func() {
 
 			Context("When the test row is compatible with the training data", func() {
 				BeforeEach(func() {
-					features, err := slice.SliceFromRawValues(true, []int{1, 2}, columnTypes, []float64{helloRaw, 3.3, 1.0})
+					otherRaw, err := columnTypes[0].PersistRawFromString("other")
+					Ω(err).ShouldNot(HaveOccurred())
+
+					features, err := slice.SliceFromRawValues(true, []int{1, 2}, columnTypes, []float64{otherRaw, 3.3, 1.0})
 					Ω(err).ShouldNot(HaveOccurred())
 
 					testRow = row.NewRow(features, emptyTarget, 2)
