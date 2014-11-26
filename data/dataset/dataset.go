@@ -130,6 +130,61 @@ func (dataset *inMemoryDataset) Row(i int) (row.Row, error) {
 	return dataset.rows[i], nil
 }
 
+func NewSubset(ds Dataset, rowMap []int) Dataset {
+	return &subset{
+		ds,
+		rowMap,
+		ds.AllFeaturesFloats(),
+		ds.AllTargetsFloats(),
+		ds.NumFeatures(),
+		ds.NumTargets(),
+		len(rowMap),
+	}
+}
+
+type subset struct {
+	superset          Dataset
+	rowMap            []int
+	allFeaturesFloats bool
+	allTargetsFloats  bool
+	numFeatures       int
+	numTargets        int
+	numRows           int
+}
+
+func (s *subset) AllFeaturesFloats() bool {
+	return s.allFeaturesFloats
+}
+
+func (s *subset) AllTargetsFloats() bool {
+	return s.allTargetsFloats
+}
+
+func (s *subset) NumFeatures() int {
+	return s.numFeatures
+}
+
+func (s *subset) NumTargets() int {
+	return s.numTargets
+}
+
+func (s *subset) AddRowFromStrings([]string) error {
+	return errors.New("AddRowFromStrings operation not permitted on subsets")
+}
+
+func (s *subset) NumRows() int {
+	return s.numRows
+}
+
+func (s *subset) Row(i int) (row.Row, error) {
+	numRows := s.numRows
+	if i < 0 || numRows <= i {
+		return nil, newDatasetRowIndexOutOfBoundsError(i, numRows)
+	}
+
+	return s.superset.Row(s.rowMap[i])
+}
+
 func newRowLengthMismatchError(actual, expected int) error {
 	return errors.New(fmt.Sprintf("Row has length %d, expected %d", actual, expected))
 }
